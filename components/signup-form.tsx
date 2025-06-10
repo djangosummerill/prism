@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { IconBrandGoogle } from "@tabler/icons-react";
 
 export function SignUpForm({
   className,
@@ -70,6 +71,12 @@ export function SignUpForm({
                     <Label htmlFor="password">Password</Label>
                   </div>
                   <Input id="password" type="password" required />
+                </div>
+                <div className="grid gap-3">
+                  <div className="flex items-center">
+                    <Label htmlFor="repeat-password">Repeat Password</Label>
+                  </div>
+                  <Input id="repeat-password" type="password" required />
                 </div>
                 <Button type="submit" className="w-full">
                   Login
