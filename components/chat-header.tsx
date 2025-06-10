@@ -1,3 +1,6 @@
+"use client";
+
+import router, { useRouter } from "next/navigation";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -11,6 +14,8 @@ import { Separator } from "./ui/separator";
 import { SidebarTrigger } from "./ui/sidebar";
 
 export function ChatHeader() {
+  const router = useRouter();
+
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
       <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
@@ -22,7 +27,7 @@ export function ChatHeader() {
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem className="hidden md:block">
-              <BreadcrumbLink href="#">
+              <BreadcrumbLink href="" onClick={() => router.push("/")}>
                 <h1 className="text-base font-medium">Chats</h1>
               </BreadcrumbLink>
             </BreadcrumbItem>
