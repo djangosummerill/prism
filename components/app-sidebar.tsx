@@ -1,8 +1,5 @@
-import * as React from "react"
-import {
-  IconInnerShadowTop,
-  IconPrism,
-} from "@tabler/icons-react"
+import * as React from "react";
+import { IconInnerShadowTop, IconPrism } from "@tabler/icons-react";
 
 import {
   Sidebar,
@@ -12,7 +9,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
+import { Button } from "./ui/button";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
@@ -26,16 +24,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             >
               <a href="#">
                 <IconPrism className="!size-5" />
-                <span className="text-base font-semibold">Prism</span>
+                <span className="text-base font-bold">Prism</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="p-2">
+        <Button variant="outline" className="font-semibold">
+          New Chat
+        </Button>
       </SidebarContent>
-      <SidebarFooter>
-      </SidebarFooter>
+      <SidebarFooter></SidebarFooter>
     </Sidebar>
-  )
+  );
 }
