@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/components/app-sidebar";
+import { ChatHeader } from "@/components/chat-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import Image from "next/image";
 
@@ -13,7 +14,9 @@ export default function Home() {
       }
     >
       <AppSidebar variant="inset" />
-      <SidebarInset>Hello</SidebarInset>
+      <SidebarInset>
+        <ChatHeader />
+      </SidebarInset>
     </SidebarProvider>
   );
 }
