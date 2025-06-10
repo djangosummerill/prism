@@ -1,4 +1,4 @@
-import { LoginForm } from "@/components/login-form";
+import { SignInForm } from "@/components/signin-form";
 import { IconPrism } from "@tabler/icons-react";
 
 export default function SignInPage() {
@@ -11,7 +11,7 @@ export default function SignInPage() {
           </div>
           Prism
         </a>
-        <LoginForm />
+        <SignInForm />
       </div>
     </div>
   );
