@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import { IconInnerShadowTop, IconPrism } from "@tabler/icons-react";
 
@@ -12,8 +14,11 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "./ui/button";
 import { NavUser } from "./nav-user";
+import { useRouter } from "next/navigation";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const router = useRouter();
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -32,11 +37,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent className="p-2">
-        <a href="/" className="w-full">
-          <Button variant="outline" className="font-semibold w-full">
-            New Chat
-          </Button>
-        </a>
+        <Button
+          variant="outline"
+          className="font-semibold"
+          onClick={() => router.push("/")}
+        >
+          New Chat
+        </Button>
       </SidebarContent>
       <SidebarFooter>
         <NavUser />
