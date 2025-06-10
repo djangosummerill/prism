@@ -31,9 +31,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent className="p-2">
-        <Button variant="outline" className="font-semibold">
-          New Chat
-        </Button>
+        <a href="/" className="w-full">
+          <Button variant="outline" className="font-semibold w-full">
+            New Chat
+          </Button>
+        </a>
       </SidebarContent>
       <SidebarFooter></SidebarFooter>
     </Sidebar>
