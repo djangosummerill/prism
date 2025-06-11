@@ -103,7 +103,7 @@ export default function SignInPage() {
                     />
                   </div>
                   <Button formAction={signin} type="submit" className="w-full">
-                    Login
+                    Sign in
                   </Button>
                 </div>
               </form>
