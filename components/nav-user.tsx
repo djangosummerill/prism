@@ -53,9 +53,7 @@ export function NavUser() {
           user.email ||
           "User",
         email: user.email || "",
-        avatar:
-          user.user_metadata?.avatar_url ||
-          `https://api.dicebear.com/7.x/identicon/svg?seed=${user.id}`,
+        avatar: user.user_metadata?.avatar_url,
       });
       setLoading(false);
     }
