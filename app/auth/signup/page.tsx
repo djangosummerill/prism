@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircleIcon } from "lucide-react";
+import { AlertCircleIcon, InfoIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { signinWithGoogle } from "../signin/actions";
 import { signup } from "./actions";
@@ -20,6 +20,8 @@ import { signup } from "./actions";
 export default function SignUpPage() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
+  const info = searchParams.get("info");
+  const description = searchParams.get("description");
 
   const [password, setPassword] = useState("");
   const [repeatPassword, setRepeatPassword] = useState("");
@@ -45,6 +47,17 @@ export default function SignUpPage() {
                     {decodeURIComponent(error)}
                   </AlertTitle>
                   <AlertDescription>Please try again!</AlertDescription>
+                </Alert>
+              )}
+              {info && (
+                <Alert>
+                  <InfoIcon />
+                  <AlertTitle className="font-semibold">
+                    {decodeURIComponent(info)}
+                  </AlertTitle>
+                  {description && (
+                    <AlertDescription>{description}</AlertDescription>
+                  )}
                 </Alert>
               )}
               <div className="flex flex-col gap-4">
