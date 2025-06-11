@@ -46,7 +46,12 @@ export function NavUser() {
         return;
       }
       setUser({
-        name: user.user_metadata?.full_name || user.email || "User",
+        name:
+          user.user_metadata?.full_name ||
+          user.user_metadata?.display_name ||
+          user.user_metadata?.displayName ||
+          user.email ||
+          "User",
         email: user.email || "",
         avatar:
           user.user_metadata?.avatar_url ||
