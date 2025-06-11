@@ -35,8 +35,6 @@ export function NavUser() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    let ignore = false;
-
     async function getUser() {
       setLoading(true);
       const {
