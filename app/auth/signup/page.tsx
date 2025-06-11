@@ -43,7 +43,7 @@ export default function SignUpPage() {
               {error && (
                 <Alert variant="destructive">
                   <AlertCircleIcon />
-                  <AlertTitle className="font-semibold">
+                  <AlertTitle className="font-semibold line-clamp-none">
                     {decodeURIComponent(error)}
                   </AlertTitle>
                   <AlertDescription>Please try again!</AlertDescription>

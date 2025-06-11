@@ -25,6 +25,8 @@ export async function signup(formData: FormData) {
     redirect(`/auth/signup?error=${error.message}`);
   }
 
-  revalidatePath("/", "layout");
-  redirect("/");
+  //revalidatePath("/", "layout");
+  redirect(
+    "/auth/signup?info=Please check your email!&description=Please check your email and click the verification link to continue."
+  );
 }
