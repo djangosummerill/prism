@@ -22,6 +22,8 @@ import { NavUserSkeleton } from "@/components/nav-user-skeleton";
 import { NavUserAuthButtons } from "@/components/nav-user-auth-buttons";
 import { LogoutDialog } from "@/components/logout-dialog";
 
+const USER_CACHE_KEY = "navUserCache";
+
 export function NavUser() {
   const supabase = createClient();
   const { isMobile } = useSidebar();
@@ -34,6 +36,15 @@ export function NavUser() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
 
+  // Try to load cached user immediately
+  useEffect(() => {
+    const cached = localStorage.getItem(USER_CACHE_KEY);
+    if (cached) {
+      setUser(JSON.parse(cached));
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     async function getUser() {
       setLoading(true);
@@ -42,10 +53,11 @@ export function NavUser() {
       } = await supabase.auth.getUser();
       if (!user) {
         setUser(null);
+        localStorage.removeItem(USER_CACHE_KEY);
         setLoading(false);
         return;
       }
-      setUser({
+      const userData = {
         name:
           user.user_metadata?.full_name ||
           user.user_metadata?.display_name ||
@@ -54,7 +66,9 @@ export function NavUser() {
           "User",
         email: user.email || "",
         avatar: user.user_metadata?.avatar_url,
-      });
+      };
+      setUser(userData);
+      localStorage.setItem(USER_CACHE_KEY, JSON.stringify(userData));
       setLoading(false);
     }
 
@@ -67,15 +81,18 @@ export function NavUser() {
     return () => {
       listener?.subscription.unsubscribe();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setUser(null);
+    localStorage.removeItem(USER_CACHE_KEY);
     router.refresh();
   };
 
-  if (loading) return <NavUserSkeleton />;
+  // Only show skeleton if no cached user and loading
+  if (loading && !user) return <NavUserSkeleton />;
   if (!user) return <NavUserAuthButtons />;
 
   return (
