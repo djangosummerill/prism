@@ -15,6 +15,7 @@ import {
 import { Button } from "./ui/button";
 import { NavUser } from "./nav-user";
 import { useRouter } from "next/navigation";
+import { createChat } from "@/lib/chat-store";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter();

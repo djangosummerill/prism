@@ -1,6 +1,6 @@
 "use client";
 
-import router, { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -9,11 +9,14 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "./ui/breadcrumb";
-import { Button } from "./ui/button";
 import { Separator } from "./ui/separator";
 import { SidebarTrigger } from "./ui/sidebar";
 
-export function ChatHeader() {
+interface ChatHeaderProps {
+  chatName?: string;
+}
+
+export function ChatHeader({ chatName = "New Chat" }: ChatHeaderProps) {
   const router = useRouter();
 
   return (
@@ -34,7 +37,7 @@ export function ChatHeader() {
             <BreadcrumbSeparator className="hidden md:block" />
             <BreadcrumbItem>
               <BreadcrumbPage>
-                <h1 className="text-base font-medium">New Chat</h1>
+                <h1 className="text-base font-medium">{chatName}</h1>
               </BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
