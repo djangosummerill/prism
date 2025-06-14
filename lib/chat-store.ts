@@ -2,7 +2,7 @@ import { generateId, Message } from "ai";
 import { createClient } from "@/lib/supabase/client";
 
 export async function createChat(
-  title?: string,
+  title?: string
 ): Promise<{ id: string; chat: any }> {
   const supabase = await createClient();
 
@@ -58,4 +58,23 @@ export async function loadChats() {
   }
 
   return data;
+}
+
+export async function deleteChat(chatId: string): Promise<void> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    throw new Error("User not authenticated");
+  }
+
+  const { error } = await supabase.from("chats").delete().eq("id", chatId);
+
+  if (error) {
+    throw new Error(`Failed to delete chat: ${error.message}`);
+  }
 }

@@ -8,6 +8,7 @@ import {
   ReactNode,
 } from "react";
 import { loadChats } from "@/lib/chat-store";
+import { useRouter } from "next/navigation";
 
 interface Chat {
   id: string;
@@ -23,6 +24,7 @@ interface ChatContextType {
   updateChatTitle: (id: string, title: string) => void;
   currentChatId: string | undefined;
   setCurrentChatId: (id: string | undefined) => void;
+  deleteChat: (id: string) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -30,9 +32,10 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 const CHAT_CACHE_KEY = "prism_cached_chats";
 
 export function ChatProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const [chats, setChats] = useState<Chat[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | undefined>(
-    undefined,
+    undefined
   );
 
   const refreshChats = async () => {
@@ -54,14 +57,29 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const updateChatTitle = (id: string, title: string) => {
     setChats((prevChats) =>
       prevChats.map((chat) =>
-        chat.id === id ? { ...chat, title: title } : chat,
-      ),
+        chat.id === id ? { ...chat, title: title } : chat
+      )
     );
 
     const updatedChats = chats.map((chat) =>
-      chat.id === id ? { ...chat, title: title } : chat,
+      chat.id === id ? { ...chat, title: title } : chat
     );
     localStorage.setItem(CHAT_CACHE_KEY, JSON.stringify(updatedChats));
+  };
+
+  const deleteChat = async (id: string) => {
+    try {
+      setChats((prevChats) => prevChats.filter((chat) => chat.id !== id));
+      const updatedChats = chats.filter((chat) => chat.id !== id);
+      localStorage.setItem(CHAT_CACHE_KEY, JSON.stringify(updatedChats));
+
+      if (currentChatId === id) {
+        setCurrentChatId(undefined);
+        router.push("/");
+      }
+    } catch (error) {
+      console.error("Failed to delete chat:", error);
+    }
   };
 
   useEffect(() => {
@@ -88,6 +106,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         updateChatTitle,
         currentChatId,
         setCurrentChatId,
+        deleteChat,
       }}
     >
       {children}
