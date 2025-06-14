@@ -1,12 +1,15 @@
 "use client";
 
-import * as React from "react";
-import { IconInnerShadowTop, IconPrism } from "@tabler/icons-react";
+import { useEffect, useState, ComponentProps } from "react";
+import { IconPrism } from "@tabler/icons-react";
 
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -15,10 +18,20 @@ import {
 import { Button } from "./ui/button";
 import { NavUser } from "./nav-user";
 import { useRouter } from "next/navigation";
-import { createChat } from "@/lib/chat-store";
+import { loadChats } from "@/lib/chat-store";
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   const router = useRouter();
+  const [chats, setChats] = useState<any[]>([]); // Replace `any` with proper type if available
+
+  useEffect(() => {
+    async function fetchChats() {
+      const loadedChats = await loadChats();
+      setChats(loadedChats);
+    }
+
+    fetchChats();
+  }, []);
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -45,6 +58,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         >
           New Chat
         </Button>
+        <SidebarGroup className="p-0 m-0">
+          <SidebarGroupLabel>Chats</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {chats.map((chat) => (
+                <SidebarMenuItem key={chat.id}>
+                  <SidebarMenuButton
+                    onClick={() => router.push(`/chat/${chat.id}`)}
+                  >
+                    {chat.name ?? "Untitled Chat"}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
         <NavUser />

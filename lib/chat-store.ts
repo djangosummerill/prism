@@ -42,3 +42,18 @@ export async function loadMessages(chatId: string) {
 
   return data;
 }
+
+export async function loadChats() {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("chats")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(`Failed to fetch chats: ${error.message}`);
+  }
+
+  return data;
+}
