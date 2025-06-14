@@ -69,7 +69,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
                     onClick={() => handleChatClick(chat.id)}
                     className={currentChatId === chat.id ? "bg-muted" : ""}
                   >
-                    {chat.name ?? "Untitled Chat"}
+                    {chat.title ?? "Untitled Chat"}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

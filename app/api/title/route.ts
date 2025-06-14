@@ -11,5 +11,5 @@ export async function POST(req: Request) {
     .update({ title: title })
     .eq("id", id);
 
-  return title;
+  return new Response(title);
 }

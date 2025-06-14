@@ -11,7 +11,7 @@ import { loadChats } from "@/lib/chat-store";
 
 interface Chat {
   id: string;
-  name?: string;
+  title?: string;
   created_at: string;
   user_id: string;
 }
@@ -20,6 +20,7 @@ interface ChatContextType {
   chats: Chat[];
   refreshChats: () => Promise<void>;
   addChat: (chat: Chat) => void;
+  updateChatTitle: (id: string, title: string) => void;
   currentChatId: string | undefined;
   setCurrentChatId: (id: string | undefined) => void;
 }
@@ -50,6 +51,19 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(CHAT_CACHE_KEY, JSON.stringify(updatedChats));
   };
 
+  const updateChatTitle = (id: string, title: string) => {
+    setChats((prevChats) =>
+      prevChats.map((chat) =>
+        chat.id === id ? { ...chat, title: title } : chat,
+      ),
+    );
+
+    const updatedChats = chats.map((chat) =>
+      chat.id === id ? { ...chat, title: title } : chat,
+    );
+    localStorage.setItem(CHAT_CACHE_KEY, JSON.stringify(updatedChats));
+  };
+
   useEffect(() => {
     // Load cached chats first
     const cached = localStorage.getItem(CHAT_CACHE_KEY);
@@ -67,7 +81,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   return (
     <ChatContext.Provider
-      value={{ chats, refreshChats, addChat, currentChatId, setCurrentChatId }}
+      value={{
+        chats,
+        refreshChats,
+        addChat,
+        updateChatTitle,
+        currentChatId,
+        setCurrentChatId,
+      }}
     >
       {children}
     </ChatContext.Provider>
