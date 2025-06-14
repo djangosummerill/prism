@@ -1,7 +1,12 @@
 "use client";
 
 import { ComponentProps, useState } from "react";
-import { IconPrism, IconTrash, IconEdit } from "@tabler/icons-react";
+import {
+  IconPrism,
+  IconTrash,
+  IconEdit,
+  IconSearch,
+} from "@tabler/icons-react";
 
 import {
   Sidebar,
@@ -16,6 +21,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Button } from "./ui/button";
+import { Input } from "./ui/input";
 import { NavUser } from "./nav-user";
 import { useRouter } from "next/navigation";
 import { useChatContext } from "@/lib/chat-context";
@@ -37,6 +43,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editedTitle, setEditedTitle] = useState("");
   const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleChatClick = (chatId: string) => {
     setCurrentChatId(chatId);
@@ -57,6 +64,12 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
     }
   };
 
+  const filteredChats = chats.filter((chat) =>
+    (chat.title ?? "Untitled Chat")
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase())
+  );
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -76,96 +89,113 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <Button
         variant="outline"
-        className="font-semibold m-2 mb-0"
+        className="font-semibold m-2 mb-2"
         onClick={handleNewChat}
       >
         New Chat
       </Button>
+      <div className="relative mx-2 mb-2">
+        <IconSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search chats..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
+      </div>
       <SidebarContent className="p-2">
         <SidebarGroup className="p-0 m-0">
-          <SidebarGroupLabel>Today</SidebarGroupLabel>
+          <SidebarGroupLabel>
+            {searchQuery ? `Results (${filteredChats.length})` : "Today"}
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {chats.map((chat) => {
-                const isEditing = editingChatId === chat.id;
-                return (
-                  <SidebarMenuItem
-                    key={chat.id}
-                    className="relative"
-                    onMouseEnter={() => setHoveredChatId(chat.id)}
-                    onMouseLeave={() => setHoveredChatId(null)}
-                  >
-                    <SidebarMenuButton
-                      onClick={() => {
-                        if (!isEditing) handleChatClick(chat.id);
-                      }}
-                      className={`${
-                        currentChatId === chat.id ? "bg-muted" : ""
-                      } ${
-                        hoveredChatId === chat.id
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                          : ""
-                      }`}
+              {filteredChats.length === 0 && searchQuery ? (
+                <div className="p-2 text-sm text-muted-foreground overflow-hidden whitespace-nowrap text-ellipsis">
+                  No chats found for "{searchQuery}"
+                </div>
+              ) : (
+                filteredChats.map((chat) => {
+                  const isEditing = editingChatId === chat.id;
+                  return (
+                    <SidebarMenuItem
+                      key={chat.id}
+                      className="relative"
+                      onMouseEnter={() => setHoveredChatId(chat.id)}
+                      onMouseLeave={() => setHoveredChatId(null)}
                     >
-                      {isEditing ? (
-                        <input
-                          className="bg-transparent border-none focus:outline-none w-full"
-                          value={editedTitle}
-                          autoFocus
-                          onChange={(e) => setEditedTitle(e.target.value)}
-                          onBlur={() => {
-                            if (editedTitle.trim()) {
-                              handleRenameChat(chat.id, editedTitle.trim());
-                            }
-                            setEditingChatId(null);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") e.currentTarget.blur();
-                            if (e.key === "Escape") setEditingChatId(null);
-                          }}
-                        />
-                      ) : (
-                        <span className="truncate whitespace-nowrap overflow-hidden w-full">
-                          {chat.title ?? "Untitled Chat"}
-                        </span>
-                      )}
-                    </SidebarMenuButton>
+                      <SidebarMenuButton
+                        onClick={() => {
+                          if (!isEditing) handleChatClick(chat.id);
+                        }}
+                        className={`${
+                          currentChatId === chat.id ? "bg-muted" : ""
+                        } ${
+                          hoveredChatId === chat.id
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                            : ""
+                        }`}
+                      >
+                        {isEditing ? (
+                          <input
+                            className="bg-transparent border-none focus:outline-none w-full"
+                            value={editedTitle}
+                            autoFocus
+                            onChange={(e) => setEditedTitle(e.target.value)}
+                            onBlur={() => {
+                              if (editedTitle.trim()) {
+                                handleRenameChat(chat.id, editedTitle.trim());
+                              }
+                              setEditingChatId(null);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") e.currentTarget.blur();
+                              if (e.key === "Escape") setEditingChatId(null);
+                            }}
+                          />
+                        ) : (
+                          <span className="truncate whitespace-nowrap overflow-hidden w-full">
+                            {chat.title ?? "Untitled Chat"}
+                          </span>
+                        )}
+                      </SidebarMenuButton>
 
-                    {hoveredChatId === chat.id && (
-                      <div className="absolute right-0 top-0 bottom-0 flex items-center pr-1">
-                        <div className="absolute right-0 top-0 bottom-0 w-14 bg-muted rounded-r-md" />
-                        <div className="absolute right-14 top-0 bottom-0 w-6 bg-gradient-to-l from-muted to-transparent" />
-                        <div className="relative z-10 flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0 transition-opacity hover:bg-border"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingChatId(chat.id);
-                              setEditedTitle(chat.title ?? "");
-                            }}
-                          >
-                            <IconEdit className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0 transition-opacity hover:bg-destructive"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDeletingChatId(chat.id);
-                              setOpen(true);
-                            }}
-                          >
-                            <IconTrash className="h-3 w-3" />
-                          </Button>
+                      {hoveredChatId === chat.id && (
+                        <div className="absolute right-0 top-0 bottom-0 flex items-center pr-1">
+                          <div className="absolute right-0 top-0 bottom-0 w-14 bg-muted rounded-r-md" />
+                          <div className="absolute right-14 top-0 bottom-0 w-6 bg-gradient-to-l from-muted to-transparent" />
+                          <div className="relative z-10 flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 transition-opacity hover:bg-border"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingChatId(chat.id);
+                                setEditedTitle(chat.title ?? "");
+                              }}
+                            >
+                              <IconEdit className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 transition-opacity hover:bg-destructive"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeletingChatId(chat.id);
+                                setOpen(true);
+                              }}
+                            >
+                              <IconTrash className="h-3 w-3" />
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </SidebarMenuItem>
-                );
-              })}
+                      )}
+                    </SidebarMenuItem>
+                  );
+                })
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
