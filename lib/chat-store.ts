@@ -29,13 +29,13 @@ export async function createChat(
   return { id: data.id, chat: data };
 }
 
-export async function loadMessages(chatId: string) {
+export async function loadMessages(id: string) {
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("messages")
     .select("*")
-    .eq("chat_id", chatId)
+    .eq("chat_id", id)
     .order("created_at", { ascending: true });
 
   if (error) {
@@ -60,7 +60,7 @@ export async function loadChats() {
   return data;
 }
 
-export async function deleteChat(chatId: string): Promise<void> {
+export async function deleteChat(id: string): Promise<void> {
   const supabase = await createClient();
 
   const {
@@ -72,9 +72,28 @@ export async function deleteChat(chatId: string): Promise<void> {
     throw new Error("User not authenticated");
   }
 
-  const { error } = await supabase.from("chats").delete().eq("id", chatId);
+  const { error } = await supabase.from("chats").delete().eq("id", id);
 
   if (error) {
     throw new Error(`Failed to delete chat: ${error.message}`);
+  }
+}
+
+export async function renameChat(id: string, title: string): Promise<void> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    throw new Error("User not authenticated");
+  }
+
+  const { error } = await supabase.from("chats").update({ title }).eq("id", id);
+
+  if (error) {
+    throw new Error(`Failed to rename chat: ${error.message}`);
   }
 }

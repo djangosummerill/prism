@@ -20,7 +20,7 @@ import { NavUser } from "./nav-user";
 import { useRouter } from "next/navigation";
 import { useChatContext } from "@/lib/chat-context";
 import { DeleteDialog } from "./delete-dialog";
-import { deleteChat } from "@/lib/chat-store";
+import { deleteChat, renameChat } from "@/lib/chat-store";
 
 export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   const router = useRouter();
@@ -28,10 +28,14 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
     chats,
     currentChatId,
     setCurrentChatId,
+    updateChatTitle,
     deleteChat: deleteCachedChat,
   } = useChatContext();
+
   const [hoveredChatId, setHoveredChatId] = useState<string | null>(null);
   const [deletingChatId, setDeletingChatId] = useState<string | null>(null);
+  const [editingChatId, setEditingChatId] = useState<string | null>(null);
+  const [editedTitle, setEditedTitle] = useState("");
   const [open, setOpen] = useState(false);
 
   const handleChatClick = (chatId: string) => {
@@ -42,6 +46,15 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   const handleNewChat = () => {
     setCurrentChatId(undefined);
     router.push("/");
+  };
+
+  const handleRenameChat = async (chatId: string, newTitle: string) => {
+    const chat = chats.find((c) => c.id === chatId);
+    if (chat) {
+      chat.title = newTitle;
+      await updateChatTitle(chatId, newTitle);
+      await renameChat(chatId, newTitle);
+    }
   };
 
   return (
@@ -73,59 +86,84 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
           <SidebarGroupLabel>Today</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {chats.map((chat) => (
-                <SidebarMenuItem
-                  key={chat.id}
-                  className="relative"
-                  onMouseEnter={() => setHoveredChatId(chat.id)}
-                  onMouseLeave={() => setHoveredChatId(null)}
-                >
-                  <SidebarMenuButton
-                    onClick={() => handleChatClick(chat.id)}
-                    className={`${
-                      currentChatId === chat.id ? "bg-muted" : ""
-                    } ${
-                      hoveredChatId === chat.id
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                        : ""
-                    }`}
+              {chats.map((chat) => {
+                const isEditing = editingChatId === chat.id;
+                return (
+                  <SidebarMenuItem
+                    key={chat.id}
+                    className="relative"
+                    onMouseEnter={() => setHoveredChatId(chat.id)}
+                    onMouseLeave={() => setHoveredChatId(null)}
                   >
-                    {chat.title ?? "Untitled Chat"}
-                  </SidebarMenuButton>
-                  {hoveredChatId === chat.id && (
-                    <div className="absolute right-0 top-0 bottom-0 flex items-center pr-1">
-                      <div className="absolute right-0 top-0 bottom-0 w-14 bg-muted rounded-r-md" />
-                      <div className="absolute right-14 top-0 bottom-0 w-6 bg-gradient-to-l from-muted to-transparent" />
-                      <div className="relative z-10 flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0 transition-opacity hover:bg-border"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // TODO: Implement edit functionality
+                    <SidebarMenuButton
+                      onClick={() => {
+                        if (!isEditing) handleChatClick(chat.id);
+                      }}
+                      className={`${
+                        currentChatId === chat.id ? "bg-muted" : ""
+                      } ${
+                        hoveredChatId === chat.id
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                          : ""
+                      }`}
+                    >
+                      {isEditing ? (
+                        <input
+                          className="bg-transparent border-none focus:outline-none w-full"
+                          value={editedTitle}
+                          autoFocus
+                          onChange={(e) => setEditedTitle(e.target.value)}
+                          onBlur={() => {
+                            if (editedTitle.trim()) {
+                              handleRenameChat(chat.id, editedTitle.trim());
+                            }
+                            setEditingChatId(null);
                           }}
-                        >
-                          <IconEdit className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0 transition-opacity hover:bg-destructive"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeletingChatId(chat.id); // this could probably be replaced with hoveredChatId but i don't wanna take any chances
-                            setOpen(true);
-                            // TODO: Implement delete functionality
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") e.currentTarget.blur();
+                            if (e.key === "Escape") setEditingChatId(null);
                           }}
-                        >
-                          <IconTrash className="h-3 w-3" />
-                        </Button>
+                        />
+                      ) : (
+                        chat.title ?? "Untitled Chat"
+                      )}
+                    </SidebarMenuButton>
+
+                    {hoveredChatId === chat.id && (
+                      <div className="absolute right-0 top-0 bottom-0 flex items-center pr-1">
+                        <div className="absolute right-0 top-0 bottom-0 w-14 bg-muted rounded-r-md" />
+                        <div className="absolute right-14 top-0 bottom-0 w-6 bg-gradient-to-l from-muted to-transparent" />
+                        <div className="relative z-10 flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 transition-opacity hover:bg-border"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingChatId(chat.id);
+                              setEditedTitle(chat.title ?? "");
+                            }}
+                          >
+                            <IconEdit className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 transition-opacity hover:bg-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeletingChatId(chat.id);
+                              setOpen(true);
+                            }}
+                          >
+                            <IconTrash className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </SidebarMenuItem>
-              ))}
+                    )}
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
