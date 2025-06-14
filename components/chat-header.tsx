@@ -84,7 +84,7 @@ export function ChatHeader({
   const getClickTextOffset = (
     e: MouseEvent,
     node: ChildNode,
-    container: HTMLElement
+    container: HTMLElement,
   ) => {
     const text = node.nodeValue!;
     const clickX = e.clientX;
@@ -134,17 +134,25 @@ export function ChatHeader({
             <BreadcrumbItem>
               <BreadcrumbPage>
                 {editing ? (
-                  <input
-                    ref={inputRef}
-                    className="text-base font-medium bg-transparent border-muted focus:outline-none"
-                    value={value}
-                    onChange={(e) => setValue(e.target.value)}
-                    onBlur={handleSave}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleSave();
-                      if (e.key === "Escape") handleCancel();
-                    }}
-                  />
+                  <div className="relative inline-block">
+                    <span
+                      className="invisible text-base font-medium whitespace-pre"
+                      aria-hidden="true"
+                    >
+                      {value || " "}
+                    </span>
+                    <input
+                      ref={inputRef}
+                      className="absolute inset-0 text-base font-medium bg-transparent border-none focus:outline-none w-full"
+                      value={value}
+                      onChange={(e) => setValue(e.target.value)}
+                      onBlur={handleSave}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleSave();
+                        if (e.key === "Escape") handleCancel();
+                      }}
+                    />
+                  </div>
                 ) : (
                   <h1
                     className={`text-base font-medium  ${

@@ -125,7 +125,9 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
                           }}
                         />
                       ) : (
-                        chat.title ?? "Untitled Chat"
+                        <span className="truncate whitespace-nowrap overflow-hidden w-full">
+                          {chat.title ?? "Untitled Chat"}
+                        </span>
                       )}
                     </SidebarMenuButton>
 
