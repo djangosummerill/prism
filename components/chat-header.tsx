@@ -31,7 +31,7 @@ export function ChatHeader({ chatName = "New Chat" }: ChatHeaderProps) {
           <BreadcrumbList>
             <BreadcrumbItem className="hidden md:block">
               <BreadcrumbLink onClick={() => router.push("/")}>
-                <h1 className="text-base font-medium">Chats</h1>
+                <h1 className="text-base font-medium cursor-pointer">Chats</h1>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator className="hidden md:block" />
