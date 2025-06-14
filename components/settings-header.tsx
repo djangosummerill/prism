@@ -26,7 +26,9 @@ export function SettingsHeader() {
           <BreadcrumbList>
             <BreadcrumbItem className="hidden md:block">
               <BreadcrumbLink>
-                <h1 className="text-base font-medium">Settings</h1>
+                <h1 className="text-base font-medium cursor-pointer">
+                  Settings
+                </h1>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator className="hidden md:block" />
