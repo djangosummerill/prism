@@ -16,7 +16,7 @@ interface ChatProps {
 
 export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
   const router = useRouter();
-  const { addChat, currentChatId, setCurrentChatId } = useChatContext();
+  const { addChat, chats, currentChatId, setCurrentChatId } = useChatContext();
 
   const pendingSubmit = useRef<React.FormEvent | null>(null);
 
@@ -63,9 +63,13 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
     router.push(`/chat/${id}`);
   };
 
+  const currentChat = chats.find((chat) => chat.id === currentChatId);
+  const chatName =
+    currentChat?.name || (currentChatId ? "Untitled Chat" : "New Chat");
+
   return (
     <>
-      <ChatHeader chatName={currentChatId} />
+      <ChatHeader chatName={chatName} />
 
       <div className="flex-1 flex flex-col min-h-0">
         <div className="flex-1 overflow-y-auto">
