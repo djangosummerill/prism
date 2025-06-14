@@ -16,10 +16,7 @@ interface ChatProps {
 
 export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
   const router = useRouter();
-  const { addChat } = useChatContext();
-  const [currentChatId, setCurrentChatId] = useState<string | undefined>(
-    newChat ? undefined : chatId,
-  );
+  const { addChat, currentChatId, setCurrentChatId } = useChatContext();
 
   const pendingSubmit = useRef<React.FormEvent | null>(null);
 

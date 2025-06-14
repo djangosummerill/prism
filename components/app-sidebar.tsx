@@ -22,7 +22,17 @@ import { useChatContext } from "@/lib/chat-context";
 
 export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   const router = useRouter();
-  const { chats } = useChatContext();
+  const { chats, currentChatId, setCurrentChatId } = useChatContext();
+
+  const handleChatClick = (chatId: string) => {
+    setCurrentChatId(chatId);
+    router.push(`/chat/${chatId}`);
+  };
+
+  const handleNewChat = () => {
+    setCurrentChatId(undefined);
+    router.push("/");
+  };
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -45,7 +55,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
         <Button
           variant="outline"
           className="font-semibold"
-          onClick={() => router.push("/")}
+          onClick={handleNewChat}
         >
           New Chat
         </Button>
@@ -56,7 +66,8 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
               {chats.map((chat) => (
                 <SidebarMenuItem key={chat.id}>
                   <SidebarMenuButton
-                    onClick={() => router.push(`/chat/${chat.id}`)}
+                    onClick={() => handleChatClick(chat.id)}
+                    className={currentChatId === chat.id ? "bg-muted" : ""}
                   >
                     {chat.name ?? "Untitled Chat"}
                   </SidebarMenuButton>

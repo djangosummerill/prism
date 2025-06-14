@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 import { loadChats } from "@/lib/chat-store";
 
 interface Chat {
@@ -14,6 +20,8 @@ interface ChatContextType {
   chats: Chat[];
   refreshChats: () => Promise<void>;
   addChat: (chat: Chat) => void;
+  currentChatId: string | undefined;
+  setCurrentChatId: (id: string | undefined) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -22,6 +30,9 @@ const CHAT_CACHE_KEY = "prism_cached_chats";
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [chats, setChats] = useState<Chat[]>([]);
+  const [currentChatId, setCurrentChatId] = useState<string | undefined>(
+    undefined
+  );
 
   const refreshChats = async () => {
     try {
@@ -34,7 +45,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   };
 
   const addChat = (chat: Chat) => {
-    setChats(prevChats => [chat, ...prevChats]);
+    setChats((prevChats) => [chat, ...prevChats]);
     const updatedChats = [chat, ...chats];
     localStorage.setItem(CHAT_CACHE_KEY, JSON.stringify(updatedChats));
   };
@@ -55,7 +66,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <ChatContext.Provider value={{ chats, refreshChats, addChat }}>
+    <ChatContext.Provider
+      value={{ chats, refreshChats, addChat, currentChatId, setCurrentChatId }}
+    >
       {children}
     </ChatContext.Provider>
   );
