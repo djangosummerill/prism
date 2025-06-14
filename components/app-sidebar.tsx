@@ -76,7 +76,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <Button
         variant="outline"
-        className="font-semibold m-2"
+        className="font-semibold m-2 mb-0"
         onClick={handleNewChat}
       >
         New Chat
