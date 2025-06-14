@@ -1,9 +1,7 @@
 "use client";
 
-import { AppSidebar } from "@/components/app-sidebar";
 import { ChatHeader } from "@/components/chat-header";
 import Prompt from "@/components/prompt";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { createChat } from "@/lib/chat-store";
 import { Message, useChat } from "@ai-sdk/react";
 import { useRouter } from "next/navigation";
@@ -18,7 +16,7 @@ interface ChatProps {
 export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
   const router = useRouter();
   const [currentChatId, setCurrentChatId] = useState<string | undefined>(
-    newChat ? undefined : chatId
+    newChat ? undefined : chatId,
   );
 
   const pendingSubmit = useRef<React.FormEvent | null>(null);
@@ -64,38 +62,28 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
   };
 
   return (
-    <SidebarProvider
-      style={
-        {
-          "--sidebar-width": "calc(var(--spacing) * 64)",
-          "--header-height": "calc(var(--spacing) * 12)",
-        } as React.CSSProperties
-      }
-    >
-      <AppSidebar variant="inset" />
-      <SidebarInset className="flex flex-col">
-        <ChatHeader chatName={currentChatId} />
+    <>
+      <ChatHeader chatName={currentChatId} />
 
-        <div className="flex-1 flex flex-col min-h-0">
-          <div className="flex-1 overflow-y-auto">
-            {chat?.messages.map((message) => (
-              <div key={message.id}>
-                {message.role === "user" ? "User: " : "AI: "}
-                {message.content}
-              </div>
-            ))}
-          </div>
-
-          <div className="shrink-0">
-            <Prompt
-              input={chat?.input ?? ""}
-              handleInputChange={chat?.handleInputChange ?? (() => {})}
-              handleSubmit={handleFormSubmit}
-              isLoading={false}
-            />
-          </div>
+      <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 overflow-y-auto">
+          {chat?.messages.map((message) => (
+            <div key={message.id}>
+              {message.role === "user" ? "User: " : "AI: "}
+              {message.content}
+            </div>
+          ))}
         </div>
-      </SidebarInset>
-    </SidebarProvider>
+
+        <div className="shrink-0">
+          <Prompt
+            input={chat?.input ?? ""}
+            handleInputChange={chat?.handleInputChange ?? (() => {})}
+            handleSubmit={handleFormSubmit}
+            isLoading={false}
+          />
+        </div>
+      </div>
+    </>
   );
 }

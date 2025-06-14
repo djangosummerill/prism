@@ -20,16 +20,28 @@ import { NavUser } from "./nav-user";
 import { useRouter } from "next/navigation";
 import { loadChats } from "@/lib/chat-store";
 
+const CHAT_CACHE_KEY = "prism_cached_chats";
+
 export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   const router = useRouter();
   const [chats, setChats] = useState<any[]>([]); // Replace `any` with proper type if available
 
+  // Always fetch latest chats in the background
   useEffect(() => {
+    const cached = localStorage.getItem(CHAT_CACHE_KEY);
+    if (cached) {
+      try {
+        setChats(JSON.parse(cached));
+      } catch {
+        // Ignore parse errors, fallback to empty
+      }
+    }
+
     async function fetchChats() {
       const loadedChats = await loadChats();
       setChats(loadedChats);
+      localStorage.setItem(CHAT_CACHE_KEY, JSON.stringify(loadedChats));
     }
-
     fetchChats();
   }, []);
 
