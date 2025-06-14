@@ -31,7 +31,7 @@ const CHAT_CACHE_KEY = "prism_cached_chats";
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [chats, setChats] = useState<Chat[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | undefined>(
-    undefined
+    undefined,
   );
 
   const refreshChats = async () => {

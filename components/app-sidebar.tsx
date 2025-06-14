@@ -51,16 +51,16 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
+      <Button
+        variant="outline"
+        className="font-semibold m-2"
+        onClick={handleNewChat}
+      >
+        New Chat
+      </Button>
       <SidebarContent className="p-2">
-        <Button
-          variant="outline"
-          className="font-semibold"
-          onClick={handleNewChat}
-        >
-          New Chat
-        </Button>
         <SidebarGroup className="p-0 m-0">
-          <SidebarGroupLabel>Chats</SidebarGroupLabel>
+          <SidebarGroupLabel>Today</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {chats.map((chat) => (
