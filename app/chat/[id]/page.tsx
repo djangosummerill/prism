@@ -28,11 +28,11 @@ export default function ChatPage(props: { params: Promise<{ id: string }> }) {
     loadChatData();
   }, [props.params]);
 
-  if (isLoading || !chatId) {
-    return <div>Loading...</div>;
-  }
-
   return (
-    <Chat newChat={false} chatId={chatId} initialMessages={initialMessages} />
+    <Chat
+      newChat={false}
+      chatId={chatId || undefined}
+      initialMessages={initialMessages}
+    />
   );
 }
