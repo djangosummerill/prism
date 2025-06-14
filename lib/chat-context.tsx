@@ -69,14 +69,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const deleteChat = async (id: string) => {
     try {
-      setChats((prevChats) => prevChats.filter((chat) => chat.id !== id));
-      const updatedChats = chats.filter((chat) => chat.id !== id);
-      localStorage.setItem(CHAT_CACHE_KEY, JSON.stringify(updatedChats));
-
       if (currentChatId === id) {
         setCurrentChatId(undefined);
         router.push("/");
       }
+
+      setChats((prevChats) => prevChats.filter((chat) => chat.id !== id));
+      const updatedChats = chats.filter((chat) => chat.id !== id);
+      localStorage.setItem(CHAT_CACHE_KEY, JSON.stringify(updatedChats));
     } catch (error) {
       console.error("Failed to delete chat:", error);
     }
