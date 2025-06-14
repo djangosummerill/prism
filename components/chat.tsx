@@ -2,7 +2,7 @@
 
 import { ChatHeader } from "@/components/chat-header";
 import Prompt from "@/components/prompt";
-import { createChat } from "@/lib/chat-store";
+import { createChat, renameChat } from "@/lib/chat-store";
 import { Message, useChat } from "@ai-sdk/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
@@ -41,6 +41,15 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
       }
     } catch (error) {
       console.error("Failed to generate title:", error);
+    }
+  };
+
+  const handleRenameChat = async (chatId: string, newTitle: string) => {
+    const chat = chats.find((c) => c.id === chatId);
+    if (chat) {
+      chat.title = newTitle;
+      await updateChatTitle(chatId, newTitle);
+      await renameChat(chatId, newTitle);
     }
   };
 
@@ -107,7 +116,13 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
 
   return (
     <>
-      <ChatHeader chatName={chatName} />
+      <ChatHeader
+        chatName={chatName}
+        newChat={newChat}
+        onRename={(title) => {
+          handleRenameChat(currentChatId || "", title);
+        }}
+      />
 
       <div className="flex-1 flex flex-col min-h-0">
         <div className="flex-1 overflow-y-auto">
