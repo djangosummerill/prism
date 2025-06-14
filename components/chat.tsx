@@ -5,47 +5,62 @@ import { ChatHeader } from "@/components/chat-header";
 import Prompt from "@/components/prompt";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { createChat } from "@/lib/chat-store";
-import { useChat } from "@ai-sdk/react";
+import { Message, useChat } from "@ai-sdk/react";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface ChatProps {
   newChat: boolean;
   chatId?: string;
+  initialMessages?: Message[];
 }
 
-export default function Chat({ newChat, chatId }: ChatProps) {
+export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
   const router = useRouter();
   const [currentChatId, setCurrentChatId] = useState<string | undefined>(
-    chatId
+    newChat ? undefined : chatId
   );
 
-  const { messages, input, handleInputChange, handleSubmit } = useChat({
-    id: currentChatId, // This maintains state across navigation
+  const pendingSubmit = useRef<React.FormEvent | null>(null);
+
+  const chat = useChat({
+    id: currentChatId,
+    initialMessages,
+    sendExtraMessageFields: true,
   });
 
-  // Update currentChatId when chatId prop changes
+  // Handle switching chats from prop
   useEffect(() => {
     if (chatId && chatId !== currentChatId) {
       setCurrentChatId(chatId);
     }
   }, [chatId, currentChatId]);
 
+  // Once currentChatId is set and there's a pending form event, submit
+  useEffect(() => {
+    if (currentChatId && pendingSubmit.current && chat) {
+      chat.handleSubmit(pendingSubmit.current);
+      pendingSubmit.current = null;
+    }
+  }, [currentChatId, chat]);
+
   const handleFormSubmit = async (e: React.FormEvent) => {
-    if (!newChat) {
-      handleSubmit(e);
+    e.preventDefault();
+
+    if (!newChat && currentChatId) {
+      chat?.handleSubmit(e);
       return;
     }
 
-    // Create the chat ID first
+    // 1. Save the pending event
+    pendingSubmit.current = e;
+
+    // 2. Create chat and set ID
     const id = await createChat();
     setCurrentChatId(id);
 
-    // Navigate to the new chat page
+    // 3. Navigate to the new chat URL
     router.push(`/chat/${id}`);
-
-    // Now submit with the new chat ID
-    handleSubmit(e);
   };
 
   return (
@@ -59,10 +74,11 @@ export default function Chat({ newChat, chatId }: ChatProps) {
     >
       <AppSidebar variant="inset" />
       <SidebarInset className="flex flex-col">
-        <ChatHeader chatName={chatId} />
+        <ChatHeader chatName={currentChatId} />
+
         <div className="flex-1 flex flex-col min-h-0">
           <div className="flex-1 overflow-y-auto">
-            {messages.map((message) => (
+            {chat?.messages.map((message) => (
               <div key={message.id}>
                 {message.role === "user" ? "User: " : "AI: "}
                 {message.content}
@@ -72,8 +88,8 @@ export default function Chat({ newChat, chatId }: ChatProps) {
 
           <div className="shrink-0">
             <Prompt
-              input={input}
-              handleInputChange={handleInputChange}
+              input={chat?.input ?? ""}
+              handleInputChange={chat?.handleInputChange ?? (() => {})}
               handleSubmit={handleFormSubmit}
               isLoading={false}
             />
