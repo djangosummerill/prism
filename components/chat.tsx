@@ -5,8 +5,20 @@ import Prompt from "@/components/prompt";
 import { createChat, renameChat } from "@/lib/chat-store";
 import { Message, useChat } from "@ai-sdk/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useChatContext } from "@/lib/chat-context";
+import { Button } from "@/components/ui/button";
+import {
+  Copy,
+  Edit,
+  GitBranch,
+  GitBranchPlus,
+  RefreshCcw,
+  Split,
+} from "lucide-react";
+import { IconGitBranch, IconRefresh } from "@tabler/icons-react";
+import IconButton from "./chat-button";
+import Markdown from "marked-react";
 
 interface ChatProps {
   newChat: boolean;
@@ -21,6 +33,7 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
 
   const pendingSubmit = useRef<React.FormEvent | null>(null);
   const titlesGenerated = useRef<Set<string>>(new Set());
+  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
 
   const generateTitle = async (message: string, chatId: string) => {
     try {
@@ -50,6 +63,14 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
       chat.title = newTitle;
       await updateChatTitle(chatId, newTitle);
       await renameChat(chatId, newTitle);
+    }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (error) {
+      console.error("Failed to copy text:", error);
     }
   };
 
@@ -125,11 +146,53 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
       />
 
       <div className="flex-1 flex flex-col min-h-0">
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto max-w-3xl mx-auto w-full p-6 space-y-6">
           {chatHook?.messages.map((message) => (
-            <div key={message.id}>
-              {message.role === "user" ? "User: " : "AI: "}
-              {message.content}
+            <div key={message.id} className="relative group mb-12">
+              <div
+                className={`space-y-2 ${
+                  message.role === "user"
+                    ? "ml-auto max-w-5/6 w-fit bg-muted outline-0 border border-muted-foreground/20 text-primary p-4 rounded-2xl"
+                    : "w-fit"
+                }`}
+              >
+                <div className="prose max-w-none leading-relaxed whitespace-pre-wrap">
+                  <Markdown>{message.content}</Markdown>
+                </div>
+              </div>
+              <div
+                className={`absolute top-full mt-1 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${
+                  message.role === "user" ? "right-0" : "left-0"
+                }`}
+              >
+                <IconButton
+                  onClick={() => copyToClipboard(message.content)}
+                  icon={Copy}
+                  tabIndex={-1}
+                  aria-label="Copy"
+                />
+                {message.role === "user" ? (
+                  <IconButton
+                    onClick={() => {}}
+                    icon={Edit}
+                    tabIndex={-1}
+                    aria-label="Edit"
+                  />
+                ) : (
+                  <IconButton
+                    onClick={() => {}}
+                    icon={Split}
+                    tabIndex={-1}
+                    aria-label="Split"
+                  />
+                )}
+                <IconButton
+                  onClick={() => {}}
+                  icon={IconRefresh}
+                  tabIndex={-1}
+                  aria-label="Refresh"
+                />
+              </div>
             </div>
           ))}
         </div>

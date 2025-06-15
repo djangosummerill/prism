@@ -5,7 +5,6 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { ChatProvider } from "@/lib/chat-context";
-import { SettingsSidebar } from "./settings-sidebar";
 
 interface LayoutWrapperProps {
   children: React.ReactNode;

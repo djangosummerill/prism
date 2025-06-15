@@ -21,6 +21,8 @@ import { UserAvatar } from "@/components/user-avatar";
 import { NavUserSkeleton } from "@/components/nav-user-skeleton";
 import { NavUserAuthButtons } from "@/components/nav-user-auth-buttons";
 import { LogoutDialog } from "@/components/logout-dialog";
+import { Dialog, DialogTrigger } from "./ui/dialog";
+import { SettingsDialog } from "./settings-dialog";
 
 const USER_CACHE_KEY = "navUserCache";
 
@@ -35,6 +37,7 @@ export function NavUser() {
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Try to load cached user immediately
   useEffect(() => {
@@ -118,7 +121,11 @@ export function NavUser() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => router.push("/settings")}>
+              <DropdownMenuItem
+                onClick={() => {
+                  setSettingsOpen(true);
+                }}
+              >
                 <IconSettings />
                 Settings
               </DropdownMenuItem>
@@ -135,6 +142,7 @@ export function NavUser() {
         </DropdownMenu>
       </SidebarMenuItem>
       <LogoutDialog open={open} setOpen={setOpen} onConfirm={handleLogout} />
+      <SettingsDialog open={settingsOpen} setOpen={setSettingsOpen} />
     </SidebarMenu>
   );
 }

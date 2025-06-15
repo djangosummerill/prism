@@ -17,12 +17,12 @@ import Qwen from "@/components/icons/qwen";
 const aiLabs = [
   {
     name: "OpenAI",
-    models: ["GPT-4", "GPT-3.5", "DALL-E 3"],
+    models: ["o4 mini", "o3 mini", "o3", "GPT 4.1"],
     icon: OpenAI,
   },
   {
     name: "Anthropic",
-    models: ["Claude 3", "Claude 2"],
+    models: ["Claude 4 Sonnet"],
     icon: Anthropic,
   },
   {
