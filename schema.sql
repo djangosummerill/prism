@@ -16,18 +16,27 @@ create table if not exists messages (
   created_at timestamp with time zone default now()
 );
 
+-- SETTINGS TABLE (PER-USER)
+create table if not exists settings (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  key text not null,
+  value jsonb not null,
+  primary key (user_id, key)
+);
+
 -- INDEXES FOR PERFORMANCE
 create index if not exists idx_chats_user_id on chats (user_id);
 create index if not exists idx_messages_chat_id on messages (chat_id);
 create index if not exists idx_messages_chat_id_created_at
   on messages (chat_id, created_at);
+create index if not exists idx_settings_user_id on settings (user_id);
 
 -- ENABLE RLS
 alter table chats enable row level security;
 alter table messages enable row level security;
+alter table settings enable row level security;
 
 -- RLS POLICIES FOR CHATS
--- Only allow users to access their own chats
 create policy "Allow user to select their own chats"
   on chats for select
   using (user_id = auth.uid());
@@ -45,7 +54,6 @@ create policy "Allow user to delete their own chats"
   using (user_id = auth.uid());
 
 -- RLS POLICIES FOR MESSAGES
--- Only allow users to access messages in their own chats
 create policy "Allow user to select messages in their chats"
   on messages for select
   using (
@@ -77,3 +85,20 @@ create policy "Allow user to delete messages in their chats"
       select id from chats where user_id = auth.uid()
     )
   );
+
+-- RLS POLICIES FOR SETTINGS
+create policy "Allow user to select their own settings"
+  on settings for select
+  using (user_id = auth.uid());
+
+create policy "Allow user to insert their own settings"
+  on settings for insert
+  with check (user_id = auth.uid());
+
+create policy "Allow user to update their own settings"
+  on settings for update
+  using (user_id = auth.uid());
+
+create policy "Allow user to delete their own settings"
+  on settings for delete
+  using (user_id = auth.uid());
