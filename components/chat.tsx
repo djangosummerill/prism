@@ -156,7 +156,7 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
                     : "w-fit"
                 }`}
               >
-                <div className="prose max-w-none leading-relaxed whitespace-pre-wrap">
+                <div className="prose max-w-none leading-relaxed whitespace-pre-wrap dark:prose-invert prose-stone">
                   <Markdown>{message.content}</Markdown>
                 </div>
               </div>

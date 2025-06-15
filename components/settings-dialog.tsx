@@ -46,7 +46,8 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar";
 import { IconKey } from "@tabler/icons-react";
-import General from "./settings/general";
+import General from "./settings/pages/general";
+import Appearance from "./settings/pages/appearance";
 
 const data = {
   nav: [
@@ -58,7 +59,7 @@ const data = {
     {
       name: "Appearance",
       icon: PaintBucket,
-      content: <div>BYOk settings go here.</div>,
+      content: <Appearance />,
     },
   ],
 };
