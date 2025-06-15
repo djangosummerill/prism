@@ -48,6 +48,7 @@ import {
 import { IconKey } from "@tabler/icons-react";
 import General from "./settings/pages/general";
 import Appearance from "./settings/pages/appearance";
+import BYOK from "./settings/pages/byok";
 
 const data = {
   nav: [
@@ -60,6 +61,11 @@ const data = {
       name: "Appearance",
       icon: PaintBucket,
       content: <Appearance />,
+    },
+    {
+      name: "BYOK",
+      icon: Key,
+      content: <BYOK />,
     },
   ],
 };
