@@ -6,6 +6,7 @@ import {
   IconTrash,
   IconEdit,
   IconSearch,
+  IconX,
 } from "@tabler/icons-react";
 
 import {
@@ -100,8 +101,17 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
           placeholder="Search chats..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
+          className="px-10"
         />
+        <Button
+          variant="ghost"
+          className={`absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 text-muted-foreground ${
+            searchQuery == "" ? "hidden" : ""
+          }`}
+          onClick={() => setSearchQuery("")}
+        >
+          <IconX />
+        </Button>
       </div>
       <SidebarContent className="p-2">
         <SidebarGroup className="p-0 m-0">
@@ -111,7 +121,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
           <SidebarGroupContent>
             <SidebarMenu>
               {filteredChats.length === 0 && searchQuery ? (
-                <div className="p-2 text-sm text-muted-foreground overflow-hidden whitespace-nowrap text-ellipsis">
+                <div className="pt-1.5 px-2 text-sm text-muted-foreground overflow-hidden whitespace-nowrap text-ellipsis">
                   No chats found for "{searchQuery}"
                 </div>
               ) : (
@@ -162,8 +172,8 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
 
                       {hoveredChatId === chat.id && (
                         <div className="absolute right-0 top-0 bottom-0 flex items-center pr-1">
-                          <div className="absolute right-0 top-0 bottom-0 w-14 bg-muted rounded-r-md" />
-                          <div className="absolute right-14 top-0 bottom-0 w-6 bg-gradient-to-l from-muted to-transparent" />
+                          <div className="absolute right-0 top-0 bottom-0 w-14 bg-muted rounded-r-md pointer-events-none" />
+                          <div className="absolute right-14 top-0 bottom-0 w-6 bg-gradient-to-l from-muted to-transparent pointer-events-none" />
                           <div className="relative z-10 flex gap-1">
                             <Button
                               variant="ghost"

@@ -3,8 +3,15 @@ import { SettingsDropdown } from "../settings-dropdown";
 import { SettingsItem } from "../settings-item";
 import { SettingsSection } from "../settings-section";
 import { SettingsInput } from "../settings-input";
+import { toast } from "sonner";
+import { useSettings } from "@/hooks/use-settings";
 
 export default function BYOK() {
+  const { settings, updateSetting } = useSettings();
+
+  // If you want to use a more specific key, change "key" to "openrouter_api_key"
+  const apiKey = settings["key"] ?? "";
+
   return (
     <SettingsSection
       title="OpenRouter"
@@ -16,8 +23,9 @@ export default function BYOK() {
         control={
           <SettingsInput
             placeholder="sk-or-v1-..."
-            onSave={(key) => {
-              console.log(key);
+            value={apiKey}
+            onSave={async (key) => {
+              await updateSetting("key", key);
             }}
           />
         }

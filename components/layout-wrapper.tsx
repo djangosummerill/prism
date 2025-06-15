@@ -5,6 +5,8 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { ChatProvider } from "@/lib/chat-context";
+import { Toaster } from "sonner";
+import { useTheme } from "next-themes";
 
 interface LayoutWrapperProps {
   children: React.ReactNode;
@@ -12,6 +14,7 @@ interface LayoutWrapperProps {
 
 export function LayoutWrapper({ children }: LayoutWrapperProps) {
   const pathname = usePathname();
+  const { theme } = useTheme();
 
   // Don't show sidebar on auth pages
   const isAuthPage = pathname.startsWith("/auth");
@@ -32,6 +35,9 @@ export function LayoutWrapper({ children }: LayoutWrapperProps) {
       >
         <AppSidebar variant="inset" />
         <SidebarInset className="flex flex-col">{children}</SidebarInset>
+        <Toaster
+          theme={(theme as "system" | "light" | "dark" | undefined) ?? "system"}
+        />
       </SidebarProvider>
     </ChatProvider>
   );

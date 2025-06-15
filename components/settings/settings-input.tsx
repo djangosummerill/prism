@@ -2,6 +2,7 @@
 import * as React from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { IconX } from "@tabler/icons-react";
 
 interface SettingsInputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -41,12 +42,25 @@ export function SettingsInput({
 
   return (
     <div className="flex items-center">
-      <Input
-        value={internalValue}
-        placeholder={placeholder}
-        onChange={handleInputChange}
-        {...props}
-      />
+      <div className="relative w-full">
+        <Input
+          value={internalValue}
+          placeholder={placeholder}
+          onChange={handleInputChange}
+          className="pr-9.5" // Add right padding so text doesn't go under the icon
+          {...props}
+        />
+        {internalValue !== "" && (
+          <Button
+            variant="ghost"
+            onClick={() => setInternalValue("")}
+            className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground hover:text-foreground"
+          >
+            <IconX className="h-5 w-5" />
+          </Button>
+        )}
+      </div>
+
       <Button
         type="button"
         onClick={handleSave}

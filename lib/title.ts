@@ -1,9 +1,14 @@
 "use server";
 
-import { openrouter } from "@openrouter/ai-sdk-provider";
 import { generateText } from "ai";
+import { getProvider } from "./provider";
 
-export async function generateTitle(message: string): Promise<string> {
+export async function generateTitle(
+  message: string,
+  userId: string
+): Promise<string> {
+  const openrouter = await getProvider(userId);
+
   const { text } = await generateText({
     model: openrouter("google/gemini-2.5-flash-preview-05-20"),
     system:

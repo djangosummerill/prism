@@ -19,6 +19,7 @@ import {
 import { IconGitBranch, IconRefresh } from "@tabler/icons-react";
 import IconButton from "./chat-button";
 import Markdown from "marked-react";
+import { toast } from "sonner";
 
 interface ChatProps {
   newChat: boolean;
@@ -51,9 +52,32 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
       if (response.ok) {
         const title = await response.text();
         updateChatTitle(chatId, title);
+      } else {
+        // Try to get error message from response, fallback to status text
+        let errorMsg = response.statusText;
+        try {
+          const data = await response.json();
+          errorMsg = data?.error || data?.message || errorMsg;
+        } catch {
+          // If not JSON, ignore
+        }
+        toast.error("Failed to generate title", {
+          description: errorMsg || "An error occurred.",
+          action: {
+            label: "Hide",
+            onClick: () => {},
+          },
+        });
       }
     } catch (error) {
-      console.error("Failed to generate title:", error);
+      toast.error("Failed to generate title", {
+        description:
+          error instanceof Error ? error.message : "Failed to generate title.",
+        action: {
+          label: "Hide",
+          onClick: () => {},
+        },
+      });
     }
   };
 
@@ -78,6 +102,15 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
     id: currentChatId,
     initialMessages,
     sendExtraMessageFields: true,
+    onError: (error) => {
+      toast.error("Failed to generate chat", {
+        description: error?.message || "An error occurred.",
+        action: {
+          label: "Hide",
+          onClick: () => {},
+        },
+      });
+    },
   });
 
   // Handle switching chats from prop
