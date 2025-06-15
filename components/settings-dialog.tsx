@@ -46,13 +46,14 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar";
 import { IconKey } from "@tabler/icons-react";
+import General from "./settings/general";
 
 const data = {
   nav: [
     {
       name: "General",
       icon: Settings,
-      content: <div>General settings go here.</div>,
+      content: <General />,
     },
     {
       name: "Appearance",
