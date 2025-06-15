@@ -169,19 +169,21 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
     currentChat?.title || (currentChatId ? "Untitled Chat" : "New Chat");
 
   return (
-    <>
-      <ChatHeader
-        chatName={chatName}
-        newChat={newChat}
-        onRename={(title) => {
-          handleRenameChat(currentChatId || "", title);
-        }}
-      />
+    <div className="flex flex-col h-[calc(100vh-1rem)]">
+      <div className="flex-none">
+        <ChatHeader
+          chatName={chatName}
+          newChat={newChat}
+          onRename={(title) => {
+            handleRenameChat(currentChatId || "", title);
+          }}
+        />
+      </div>
 
-      <div className="flex-1 flex flex-col min-h-0">
-        <div className="flex-1 overflow-y-auto max-w-3xl mx-auto w-full p-6 space-y-6">
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-3xl mx-auto w-full px-6 pt-6 pb-2">
           {chatHook?.messages.map((message) => (
-            <div key={message.id} className="relative group mb-12">
+            <div key={message.id} className="relative group mb-6">
               <div
                 className={`space-y-2 ${
                   message.role === "user"
@@ -229,16 +231,7 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
             </div>
           ))}
         </div>
-
-        <div className="shrink-0">
-          <Prompt
-            input={chatHook?.input ?? ""}
-            handleInputChange={chatHook?.handleInputChange ?? (() => {})}
-            handleSubmit={handleFormSubmit}
-            isLoading={false}
-          />
-        </div>
       </div>
-    </>
+    </div>
   );
 }
