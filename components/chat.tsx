@@ -20,6 +20,8 @@ import { IconGitBranch, IconRefresh } from "@tabler/icons-react";
 import IconButton from "./chat-button";
 import Markdown from "marked-react";
 import { toast } from "sonner";
+import NewPrompt from "./new-prompt";
+import { useModel } from "@/hooks/use-model";
 
 interface ChatProps {
   newChat: boolean;
@@ -32,9 +34,10 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
   const { addChat, chats, currentChatId, setCurrentChatId, updateChatTitle } =
     useChatContext();
 
+  const [modelId] = useModel();
+
   const pendingSubmit = useRef<React.FormEvent | null>(null);
   const titlesGenerated = useRef<Set<string>>(new Set());
-  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
 
   const generateTitle = async (message: string, chatId: string) => {
     try {
@@ -102,6 +105,7 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
     id: currentChatId,
     initialMessages,
     sendExtraMessageFields: true,
+    body: { model: modelId },
     onError: (error) => {
       toast.error("Failed to generate chat", {
         description: error?.message || "An error occurred.",
@@ -231,6 +235,12 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
             </div>
           ))}
         </div>
+        <NewPrompt
+          input={chatHook?.input ?? ""}
+          handleInputChange={chatHook?.handleInputChange ?? (() => {})}
+          onSubmit={handleFormSubmit}
+          isLoading={chatHook.status == "streaming"}
+        />
       </div>
     </div>
   );

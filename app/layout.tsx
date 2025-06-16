@@ -5,6 +5,7 @@ import { LayoutWrapper } from "@/components/layout-wrapper";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "sonner";
 import { useTheme } from "next-themes";
+import { ModelProvider } from "@/hooks/use-model";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,7 +38,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <LayoutWrapper>{children}</LayoutWrapper>
+          <ModelProvider>
+            <LayoutWrapper>{children}</LayoutWrapper>
+          </ModelProvider>
         </ThemeProvider>
       </body>
     </html>

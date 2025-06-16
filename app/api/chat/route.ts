@@ -44,7 +44,7 @@ async function saveMessage(
 }
 
 export async function POST(req: Request) {
-  const { messages, id } = await req.json();
+  const { messages, id, model } = await req.json();
   const message = messages[messages.length - 1];
   const supabase = await createClient();
   const {
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
   await saveMessage(message, id);
 
   const result = streamText({
-    model: openrouter("openai/gpt-4.1"),
+    model: openrouter(model),
     messages,
     async onFinish({ response }) {
       const updatedMessages = appendResponseMessages({
@@ -72,6 +72,10 @@ export async function POST(req: Request) {
       await saveMessage(message, id, response.modelId);
     },
   });
+
+  // consume the stream to ensure it runs to completion & triggers onFinish
+  // even when the client response is aborted:
+  result.consumeStream(); // no await
 
   return result.toDataStreamResponse({
     getErrorMessage: errorHandler,

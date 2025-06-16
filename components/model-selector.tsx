@@ -9,59 +9,82 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
-import OpenAI from "@/components/icons/openai";
-import Anthropic from "@/components/icons/anthropic";
-import Gemini from "@/components/icons/gemini";
-import Qwen from "@/components/icons/qwen";
+import { ChevronDown } from "lucide-react";
+import { Button } from "./ui/button";
+import { aiLabs, Lab, Model } from "@/lib/models";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { useModel } from "@/hooks/use-model"; // Adjust path as needed
 
-const aiLabs = [
-  {
-    name: "OpenAI",
-    models: ["o4 mini", "o3 mini", "o3", "GPT 4.1"],
-    icon: OpenAI,
-  },
-  {
-    name: "Anthropic",
-    models: ["Claude 4 Sonnet"],
-    icon: Anthropic,
-  },
-  {
-    name: "Google",
-    models: ["Gemini", "PaLM 2"],
-    icon: Gemini,
-  },
-  {
-    name: "Qwen",
-    models: ["Qwen-1", "Qwen-2"],
-    icon: Qwen,
-  },
-];
+interface ModelSelectorProps {
+  onModelSelect?: (lab: Lab, model: Model) => void;
+}
 
-export function ModelSelector() {
+export function ModelSelector({ onModelSelect }: ModelSelectorProps) {
+  // Find the first lab and model for default selection
+  const firstLab = aiLabs[0];
+  const firstModel = firstLab.models[0];
+
+  // Use the custom useModel hook to store the selected model id
+  const [modelId, setModelId] = useModel();
+
+  // Find the selected lab and model based on the current modelId
+  const selected = (() => {
+    for (const lab of aiLabs) {
+      const model = lab.models.find((m) => m.id === modelId);
+      if (model) return { lab, model };
+    }
+    // fallback to first if not found
+    return { lab: firstLab, model: firstModel };
+  })();
+
+  const handleModelSelect = (lab: Lab, model: Model) => {
+    setModelId(model.id);
+    onModelSelect?.(lab, model);
+  };
+
+  const SelectedIcon = selected.lab.icon;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="px-4 py-2 bg-primary text-white rounded">
-          Select AI Model
-        </button>
+        <Button variant="ghost" className="flex items-center gap-2 m-1">
+          <SelectedIcon className="w-4 h-4 text-primary shrink-0" />
+          <p className="text-sm font-bold">{selected.model.name}</p>
+          <ChevronDown className="mt-0.5" size={16} />
+        </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent>
+      <DropdownMenuContent className="flex flex-col gap-1">
         {aiLabs.map((lab) => (
-          <DropdownMenuSub key={lab.name}>
-            <DropdownMenuSubTrigger>
+          <DropdownMenuSub key={lab.id}>
+            <DropdownMenuSubTrigger
+              className={selected.lab.id === lab.id ? "bg-accent" : ""}
+            >
               <span className="flex items-center gap-2">
-                <lab.icon className="w-5 h-5 text-black shrink-0" />
-                <span className="font-medium">{lab.name}</span>
+                <lab.icon className="w-5 h-5 text-primary shrink-0" />
+                <span className="font-medium mr-2">{lab.name}</span>
               </span>
             </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent>
+            <DropdownMenuSubContent className="flex flex-col gap-1">
               {lab.models.map((model) => (
-                <DropdownMenuItem
-                  key={model}
-                  onClick={() => alert(`Selected: ${lab.name} - ${model}`)}
-                >
-                  {model}
-                </DropdownMenuItem>
+                <Tooltip key={model.id}>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuItem
+                      onClick={() => handleModelSelect(lab, model)}
+                      className={`cursor-pointer ${
+                        selected.lab.id === lab.id &&
+                        selected.model.id === model.id
+                          ? "bg-accent"
+                          : ""
+                      }`}
+                    >
+                      <lab.icon className="w-5 h-5 text-primary shrink-0" />
+                      <span>{model.name}</span>
+                    </DropdownMenuItem>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <span>{model.description}</span>
+                  </TooltipContent>
+                </Tooltip>
               ))}
             </DropdownMenuSubContent>
           </DropdownMenuSub>
