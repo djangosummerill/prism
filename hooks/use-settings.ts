@@ -77,7 +77,16 @@ export function useSettings() {
       );
 
       if (error) {
-        toast.error(error.message);
+        toast.error("Failed to get settings", {
+          description:
+            error instanceof Error
+              ? error.message
+              : "Failed to generate title.",
+          action: {
+            label: "Hide",
+            onClick: () => {},
+          },
+        });
         return false;
       }
       // Update local state and cache immediately

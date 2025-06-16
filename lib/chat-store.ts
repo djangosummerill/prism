@@ -2,7 +2,7 @@ import { generateId, Message } from "ai";
 import { createClient } from "@/lib/supabase/client";
 
 export async function createChat(
-  title?: string
+  title?: string,
 ): Promise<{ id: string; chat: any }> {
   const supabase = await createClient();
 

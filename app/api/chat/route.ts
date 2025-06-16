@@ -21,7 +21,7 @@ export function errorHandler(error: unknown) {
 async function saveMessage(
   message: Message,
   chatId: string,
-  model: string = ""
+  model: string = "",
 ) {
   const supabase = await createClient();
   const {
