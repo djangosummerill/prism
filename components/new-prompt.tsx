@@ -22,11 +22,16 @@ interface Attachment {
 }
 
 interface NewPromptProps {
-  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  onSubmit: (
+    e: React.FormEvent<HTMLFormElement>,
+    attachments: Attachment[],
+  ) => void;
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   input: string;
   isLoading?: boolean;
   onHeightChange?: (height: number) => void;
+  attachments?: Attachment[];
+  onAttachmentsChange?: (attachments: Attachment[]) => void;
 }
 
 export default function NewPrompt({
@@ -35,14 +40,18 @@ export default function NewPrompt({
   input,
   isLoading = false,
   onHeightChange,
+  attachments: externalAttachments,
+  onAttachmentsChange,
 }: NewPromptProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [attachments, setAttachments] = useState<Attachment[]>(
+    externalAttachments || [],
+  );
   const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(
-    null
+    null,
   );
   const [preloadedImages, setPreloadedImages] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
 
   // Use ResizeObserver for robust height tracking
@@ -86,7 +95,9 @@ export default function NewPrompt({
       if (attachment?.optimisticUrl?.startsWith("blob:")) {
         URL.revokeObjectURL(attachment.optimisticUrl);
       }
-      return prev.filter((attachment) => attachment.id !== id);
+      const newAttachments = prev.filter((attachment) => attachment.id !== id);
+      onAttachmentsChange?.(newAttachments);
+      return newAttachments;
     });
   };
 
@@ -159,7 +170,7 @@ export default function NewPrompt({
         className="w-full fixed left-64 bottom-2 pr-64 flex justify-center z-10"
       >
         <div className="bg-accent/20 backdrop-blur-sm w-3xl border-border border-1 rounded-md mb-4 p-1">
-          <form onSubmit={onSubmit}>
+          <form onSubmit={(e) => onSubmit(e, attachments)}>
             {/* Attachments Preview */}
             {attachments.length > 0 && (
               <div className="p-2 border-b border-border/50">
@@ -169,7 +180,7 @@ export default function NewPrompt({
                       key={attachment.id}
                       className={cn(
                         "flex items-center gap-2 bg-background/50 rounded-md p-2 border border-border/30 relative",
-                        attachment.isUploading && "opacity-70"
+                        attachment.isUploading && "opacity-70",
                       )}
                     >
                       {/* Upload Progress Overlay */}
@@ -288,12 +299,16 @@ export default function NewPrompt({
                   onBeforeUploadBegin={(files) => {
                     // Add optimistic attachments immediately
                     const optimisticAttachments = files.map(
-                      createOptimisticAttachment
+                      createOptimisticAttachment,
                     );
-                    setAttachments((prev) => [
-                      ...prev,
-                      ...optimisticAttachments,
-                    ]);
+                    setAttachments((prev) => {
+                      const newAttachments = [
+                        ...prev,
+                        ...optimisticAttachments,
+                      ];
+                      onAttachmentsChange?.(newAttachments);
+                      return newAttachments;
+                    });
                     return files;
                   }}
                   onClientUploadComplete={async (res) => {
@@ -304,7 +319,7 @@ export default function NewPrompt({
                         try {
                           await preloadImage(file.url);
                           setPreloadedImages(
-                            (prev) => new Set([...prev, file.url])
+                            (prev) => new Set([...prev, file.url]),
                           );
                         } catch (error) {
                           console.warn("Failed to preload image:", file.url);
@@ -318,7 +333,7 @@ export default function NewPrompt({
                     setAttachments((prev) => {
                       // Remove all uploading attachments and clean up blob URLs
                       const uploadingAttachments = prev.filter(
-                        (att) => att.isUploading
+                        (att) => att.isUploading,
                       );
                       uploadingAttachments.forEach((att) => {
                         if (att.optimisticUrl?.startsWith("blob:")) {
@@ -327,7 +342,7 @@ export default function NewPrompt({
                       });
 
                       const withoutUploading = prev.filter(
-                        (att) => !att.isUploading
+                        (att) => !att.isUploading,
                       );
 
                       // Add the successfully uploaded files
@@ -340,7 +355,12 @@ export default function NewPrompt({
                         isUploading: false,
                       }));
 
-                      return [...withoutUploading, ...newAttachments];
+                      const finalAttachments = [
+                        ...withoutUploading,
+                        ...newAttachments,
+                      ];
+                      onAttachmentsChange?.(finalAttachments);
+                      return finalAttachments;
                     });
 
                     toast.success("Attachment uploaded!");
@@ -349,14 +369,18 @@ export default function NewPrompt({
                     // Remove failed uploads and clean up blob URLs
                     setAttachments((prev) => {
                       const failedUploads = prev.filter(
-                        (att) => att.isUploading
+                        (att) => att.isUploading,
                       );
                       failedUploads.forEach((att) => {
                         if (att.optimisticUrl?.startsWith("blob:")) {
                           URL.revokeObjectURL(att.optimisticUrl);
                         }
                       });
-                      return prev.filter((att) => !att.isUploading);
+                      const filteredAttachments = prev.filter(
+                        (att) => !att.isUploading,
+                      );
+                      onAttachmentsChange?.(filteredAttachments);
+                      return filteredAttachments;
                     });
                     toast.error("Failed to upload attachment", {
                       description:
@@ -375,8 +399,8 @@ export default function NewPrompt({
                       prev.map((att) =>
                         att.isUploading
                           ? { ...att, uploadProgress: progress }
-                          : att
-                      )
+                          : att,
+                      ),
                     );
                   }}
                 />

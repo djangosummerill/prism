@@ -24,6 +24,18 @@ import NewPrompt from "./new-prompt";
 import { useModel } from "@/hooks/use-model";
 import { MessageReasoning } from "./message-reasoning";
 import { getModelById } from "@/lib/models";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+
+interface Attachment {
+  id: string;
+  url: string;
+  name: string;
+  size: number;
+  type: string;
+  isUploading?: boolean;
+  uploadProgress?: number;
+  optimisticUrl?: string;
+}
 
 interface ChatProps {
   newChat: boolean;
@@ -38,10 +50,14 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
 
   const [modelId] = useModel();
 
-  const pendingSubmit = useRef<React.FormEvent | null>(null);
+  const pendingSubmit = useRef<{
+    event: React.FormEvent;
+    attachments?: Attachment[];
+  } | null>(null);
   const titlesGenerated = useRef<Set<string>>(new Set());
 
   const [promptHeight, setPromptHeight] = useState(80); // default height
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
 
   const generateTitle = async (message: string, chatId: string) => {
     try {
@@ -140,7 +156,26 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
   // Once currentChatId is set and there's a pending form event, submit
   useEffect(() => {
     if (currentChatId && pendingSubmit.current && chatHook) {
-      chatHook.handleSubmit(pendingSubmit.current);
+      const { event, attachments: pendingAttachments } = pendingSubmit.current;
+
+      // Always use append for optimistic UI in new chats too
+      const currentInput = chatHook?.input || "";
+      chatHook?.append({
+        role: "user",
+        content: currentInput,
+        parts: [{ type: "text", text: currentInput }],
+        experimental_attachments:
+          pendingAttachments && pendingAttachments.length > 0
+            ? pendingAttachments.map((att) => ({
+                name: att.name,
+                url: att.url,
+                contentType: att.type,
+              }))
+            : undefined,
+      });
+
+      // Clear attachments after sending
+      setAttachments([]);
       pendingSubmit.current = null;
     }
   }, [currentChatId, chatHook]);
@@ -159,16 +194,46 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
     }
   }, [chatHook?.messages, currentChatId]);
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
+  const handleFormSubmit = async (
+    e: React.FormEvent,
+    messageAttachments?: Attachment[],
+  ) => {
     e.preventDefault();
 
-    if (!newChat && currentChatId) {
-      chatHook?.handleSubmit(e);
+    const currentInput = chatHook?.input || "";
+
+    // Don't proceed if no input and no attachments
+    if (
+      !currentInput.trim() &&
+      (!messageAttachments || messageAttachments.length === 0)
+    ) {
       return;
     }
 
-    // 1. Save the pending event
-    pendingSubmit.current = e;
+    if (!newChat && currentChatId) {
+      // Always use append for optimistic UI - it immediately shows the message
+      chatHook?.append({
+        role: "user",
+        content: currentInput,
+        parts: [{ type: "text", text: currentInput }],
+        experimental_attachments:
+          messageAttachments && messageAttachments.length > 0
+            ? messageAttachments.map((att) => ({
+                name: att.name,
+                url: att.url,
+                contentType: att.type,
+              }))
+            : undefined,
+      });
+
+      // Clear attachments after sending
+      setAttachments([]);
+      return;
+    }
+
+    // For new chats, we still need to create the chat first
+    // 1. Save the pending event and attachments
+    pendingSubmit.current = { event: e, attachments: messageAttachments };
 
     // 2. Create chat and set ID
     const { id, chat } = await createChat();
@@ -215,6 +280,68 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
                 }`}
               >
                 <div className="prose max-w-none leading-relaxed whitespace-pre-wrap dark:prose-invert prose-stone">
+                  {message.experimental_attachments &&
+                    message.experimental_attachments.length > 0 && (
+                      <div className="mb-4">
+                        <div className="flex flex-wrap gap-3">
+                          {message.experimental_attachments.map(
+                            (attachment: any, index: number) => (
+                              <div
+                                key={index}
+                                className="border rounded-lg overflow-hidden bg-muted/30"
+                              >
+                                {attachment.contentType?.startsWith(
+                                  "image/",
+                                ) ? (
+                                  <Dialog>
+                                    <DialogTrigger asChild>
+                                      <div className="cursor-pointer group relative">
+                                        <img
+                                          src={attachment.url}
+                                          alt={attachment.name}
+                                          className="max-w-sm max-h-48 object-contain transition-transform group-hover:scale-105"
+                                        />
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                          <span className="text-white opacity-0 group-hover:opacity-100 text-sm font-medium">
+                                            Click to view full size
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-5xl max-h-[90vh] p-2">
+                                      <div className="flex flex-col items-center">
+                                        <img
+                                          src={attachment.url}
+                                          alt={attachment.name}
+                                          className="max-w-full max-h-[80vh] object-contain"
+                                        />
+                                        <p className="text-sm text-muted-foreground mt-2">
+                                          {attachment.name}
+                                        </p>
+                                      </div>
+                                    </DialogContent>
+                                  </Dialog>
+                                ) : (
+                                  <div className="flex items-center gap-3 p-3 min-w-48">
+                                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                                      📄
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="font-medium text-sm truncate">
+                                        {attachment.name}
+                                      </div>
+                                      <div className="text-xs text-muted-foreground">
+                                        {attachment.contentType}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            ),
+                          )}
+                        </div>
+                      </div>
+                    )}
                   {message.parts?.map((part, index) => {
                     const { type } = part;
                     const key = `message-${message.id}-part-${index}`;
@@ -284,6 +411,8 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
           onSubmit={handleFormSubmit}
           isLoading={chatHook.status == "streaming"}
           onHeightChange={setPromptHeight}
+          attachments={attachments}
+          onAttachmentsChange={setAttachments}
         />
       </div>
     </div>
