@@ -22,6 +22,8 @@ import Markdown from "marked-react";
 import { toast } from "sonner";
 import NewPrompt from "./new-prompt";
 import { useModel } from "@/hooks/use-model";
+import { MessageReasoning } from "./message-reasoning";
+import { getModelById } from "@/lib/models";
 
 interface ChatProps {
   newChat: boolean;
@@ -38,6 +40,8 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
 
   const pendingSubmit = useRef<React.FormEvent | null>(null);
   const titlesGenerated = useRef<Set<string>>(new Set());
+
+  const [promptHeight, setPromptHeight] = useState(80); // default height
 
   const generateTitle = async (message: string, chatId: string) => {
     try {
@@ -93,11 +97,20 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
     }
   };
 
-  const copyToClipboard = async (text: string) => {
+  const copyToClipboard = async (message: Message) => {
     try {
-      await navigator.clipboard.writeText(text);
-    } catch (error) {
-      console.error("Failed to copy text:", error);
+      await navigator.clipboard.writeText(
+        // @ts-ignore
+        message.parts[message.parts?.length - 1].text
+      );
+    } catch (error: any) {
+      toast.error("Failed to copy text", {
+        description: error.message || "An error occurred.",
+        action: {
+          label: "Hide",
+          onClick: () => {},
+        },
+      });
     }
   };
 
@@ -185,9 +198,15 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto w-full px-6 pt-6 pb-2">
+        <div
+          className="max-w-3xl mx-auto w-full px-6 pt-6"
+          style={{
+            paddingBottom: promptHeight + 10,
+            transition: "padding-bottom 0.2s",
+          }}
+        >
           {chatHook?.messages.map((message) => (
-            <div key={message.id} className="relative group mb-6">
+            <div key={message.id} className="relative group mb-12">
               <div
                 className={`space-y-2 ${
                   message.role === "user"
@@ -196,16 +215,34 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
                 }`}
               >
                 <div className="prose max-w-none leading-relaxed whitespace-pre-wrap dark:prose-invert prose-stone">
-                  <Markdown>{message.content}</Markdown>
+                  {message.parts?.map((part, index) => {
+                    const { type } = part;
+                    const key = `message-${message.id}-part-${index}`;
+                    console.log(message);
+
+                    if (type === "reasoning") {
+                      return (
+                        <MessageReasoning
+                          key={key}
+                          isLoading={chatHook.status == "streaming"}
+                          reasoning={part.reasoning}
+                        />
+                      );
+                    }
+
+                    if (type === "text") {
+                      return <Markdown key={key}>{part.text}</Markdown>;
+                    }
+                  })}
                 </div>
               </div>
               <div
-                className={`absolute top-full mt-1 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${
-                  message.role === "user" ? "right-0" : "left-0"
+                className={`absolute top-full mt-2 flex gap-2 items-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${
+                  message.role === "user" ? "-right-2" : "-left-2.5"
                 }`}
               >
                 <IconButton
-                  onClick={() => copyToClipboard(message.content)}
+                  onClick={() => copyToClipboard(message)}
                   icon={Copy}
                   tabIndex={-1}
                   aria-label="Copy"
@@ -231,6 +268,12 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
                   tabIndex={-1}
                   aria-label="Refresh"
                 />
+                {message.annotations && (
+                  <span className="text-muted-foreground text-sm">
+                    {/* @ts-ignore */}
+                    {message.annotations[0].model as string}
+                  </span>
+                )}
               </div>
             </div>
           ))}
@@ -240,6 +283,7 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
           handleInputChange={chatHook?.handleInputChange ?? (() => {})}
           onSubmit={handleFormSubmit}
           isLoading={chatHook.status == "streaming"}
+          onHeightChange={setPromptHeight}
         />
       </div>
     </div>

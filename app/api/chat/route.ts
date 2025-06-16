@@ -34,7 +34,7 @@ async function saveMessage(
   const { error } = await supabase.from("messages").insert({
     chat_id: chatId,
     role: message.role,
-    content: message.content,
+    content: message.parts,
     model: model,
     created_at: message.createdAt ?? new Date().toISOString(),
   });
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
   await saveMessage(message, id);
 
   const result = streamText({
-    model: openrouter(model),
+    model: openrouter(model, { reasoning: { effort: "high" } }),
     messages,
     async onFinish({ response }) {
       const updatedMessages = appendResponseMessages({
@@ -79,5 +79,6 @@ export async function POST(req: Request) {
 
   return result.toDataStreamResponse({
     getErrorMessage: errorHandler,
+    sendReasoning: true,
   });
 }

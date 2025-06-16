@@ -1,16 +1,16 @@
+// new-prompt.tsx
 "use client";
 
-import { ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef } from "react";
 import { Button } from "./ui/button";
 import { ModelSelector } from "./model-selector";
-import { Toggle } from "./ui/toggle";
 
 interface NewPromptProps {
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   input: string;
   isLoading?: boolean;
+  onHeightChange?: (height: number) => void;
 }
 
 export default function NewPrompt({
@@ -18,7 +18,34 @@ export default function NewPrompt({
   handleInputChange,
   input,
   isLoading = false,
+  onHeightChange,
 }: NewPromptProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Use ResizeObserver for robust height tracking
+  useEffect(() => {
+    if (!containerRef.current || !onHeightChange) return;
+
+    const handleResize = () => {
+      onHeightChange(containerRef.current!.offsetHeight);
+    };
+
+    // Initial call
+    handleResize();
+
+    // Use ResizeObserver for dynamic changes
+    const observer = new window.ResizeObserver(handleResize);
+    observer.observe(containerRef.current);
+
+    // Also listen for window resize (for responsive layouts)
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [input, isLoading, onHeightChange]);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -30,7 +57,10 @@ export default function NewPrompt({
   };
 
   return (
-    <div className="w-full fixed left-64 bottom-2 pr-64 flex justify-center">
+    <div
+      ref={containerRef}
+      className="w-full fixed left-64 bottom-2 pr-64 flex justify-center z-10"
+    >
       <div className="bg-accent/20 backdrop-blur-sm w-3xl border-border border-1 rounded-md mb-4 p-1">
         <form onSubmit={onSubmit}>
           <textarea
@@ -55,13 +85,6 @@ export default function NewPrompt({
           <div className="flex justify-between">
             <div className="flex justify-items-start">
               <ModelSelector />
-              {/*<Toggle
-                type="submit"
-                variant="outline"
-                className="mt-1 data-[state=on]:bg-primary/10"
-              >
-                <p className="px-2">Search</p>
-              </Toggle>*/}
             </div>
             <Button
               type="submit"

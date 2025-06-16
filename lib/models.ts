@@ -285,3 +285,13 @@ export const aiLabs: Lab[] = [
     ],
   },
 ];
+
+export function getModelById(id: string): Model | undefined {
+  for (const lab of aiLabs) {
+    const model = lab.models.find((model) => model.id === id);
+    if (model) {
+      return model;
+    }
+  }
+  return undefined;
+}

@@ -11,7 +11,7 @@ create table if not exists messages (
   id uuid primary key default gen_random_uuid(),
   chat_id uuid not null references chats(id) on delete cascade,
   role text not null check (role in ('user', 'assistant')),
-  content text not null,
+  content jsonb not null,
   model text, -- nullable, can store model name or be null
   created_at timestamp with time zone default now()
 );

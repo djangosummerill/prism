@@ -29,7 +29,7 @@ export async function createChat(
   return { id: data.id, chat: data };
 }
 
-export async function loadMessages(id: string) {
+export async function loadMessages(id: string): Promise<Message[]> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -42,7 +42,18 @@ export async function loadMessages(id: string) {
     throw new Error(`Failed to fetch messages: ${error.message}`);
   }
 
-  return data;
+  // If no messages, return an empty array
+  if (!data) return [];
+
+  // Map each message row to your Message type
+  // @ts-ignore
+  return data.map((msg) => ({
+    id: msg.id,
+    parts: msg.content,
+    createdAt: msg.created_at,
+    role: msg.role,
+    annotations: [{ model: msg.model }],
+  })) as Message[];
 }
 
 export async function loadChats() {
