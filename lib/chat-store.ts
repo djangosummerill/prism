@@ -2,7 +2,7 @@ import { generateId, Message } from "ai";
 import { createClient } from "@/lib/supabase/client";
 
 export async function createChat(
-  title?: string,
+  title?: string
 ): Promise<{ id: string; chat: any }> {
   const supabase = await createClient();
 
@@ -49,10 +49,11 @@ export async function loadMessages(id: string): Promise<Message[]> {
   // @ts-ignore
   return data.map((msg) => ({
     id: msg.id,
-    parts: msg.content,
+    parts: msg.content.parts || msg.content,
     createdAt: msg.created_at,
     role: msg.role,
     annotations: [{ model: msg.model }],
+    experimental_attachments: msg.content.experimental_attachments || [],
   })) as Message[];
 }
 

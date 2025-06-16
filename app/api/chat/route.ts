@@ -21,7 +21,7 @@ export function errorHandler(error: unknown) {
 async function saveMessage(
   message: Message,
   chatId: string,
-  model: string = "",
+  model: string = ""
 ) {
   const supabase = await createClient();
   const {
@@ -31,13 +31,20 @@ async function saveMessage(
   if (userError || !user) {
     throw new Error("User not authenticated");
   }
+
+  const content = {
+    parts: message.parts || [],
+    experimental_attachments: message.experimental_attachments || [],
+  };
+
   const { error } = await supabase.from("messages").insert({
     chat_id: chatId,
     role: message.role,
-    content: message.parts,
+    content: content,
     model: model,
     created_at: message.createdAt ?? new Date().toISOString(),
   });
+
   if (error) {
     throw new Error(`Failed to save message: ${error.message}`);
   }
