@@ -51,7 +51,7 @@ async function saveMessage(
 }
 
 export async function POST(req: Request) {
-  const { messages, id, model } = await req.json();
+  const { messages, id, model, reasoning } = await req.json();
   const message = messages[messages.length - 1];
   const supabase = await createClient();
   const {
@@ -67,8 +67,17 @@ export async function POST(req: Request) {
 
   await saveMessage(message, id);
 
+  console.log(reasoning == "none" ? { max_tokens: 0 } : { effort: reasoning });
+
   const result = streamText({
-    model: openrouter(model, { reasoning: { effort: "high" } }),
+    model: openrouter(
+      model,
+      reasoning == "none"
+        ? undefined
+        : {
+            reasoning: { effort: reasoning },
+          }
+    ),
     messages,
     async onFinish({ response }) {
       const updatedMessages = appendResponseMessages({

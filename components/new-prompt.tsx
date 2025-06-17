@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { twMerge } from "tailwind-merge";
 import { cn } from "@/lib/utils";
 import { X, Eye, Download, Loader2 } from "lucide-react";
+import ReasoningSelector from "./reasoning-selector";
+import { useModel } from "@/hooks/use-model";
 
 interface Attachment {
   id: string;
@@ -44,15 +46,20 @@ export default function NewPrompt({
   onAttachmentsChange,
 }: NewPromptProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+
   const [attachments, setAttachments] = useState<Attachment[]>(
     externalAttachments || []
   );
+
   const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(
     null
   );
+
   const [preloadedImages, setPreloadedImages] = useState<Set<string>>(
     new Set()
   );
+
+  const { reasoningLevel, setReasoningLevel } = useModel();
 
   // Use ResizeObserver for robust height tracking
   useEffect(() => {
@@ -288,7 +295,12 @@ export default function NewPrompt({
                     button({ ready }) {
                       return (
                         <div
-                          className={cn(buttonVariants({ variant: "outline" }))}
+                          className={cn(
+                            buttonVariants({
+                              variant: "outline",
+                              className: "text-primary",
+                            })
+                          )}
                         >
                           Upload
                         </div>
@@ -404,12 +416,18 @@ export default function NewPrompt({
                     );
                   }}
                 />
+                <ReasoningSelector
+                  showNone={true}
+                  value={reasoningLevel}
+                  onValueChange={setReasoningLevel}
+                  className="mt-1 ml-2"
+                />
               </div>
               <Button
                 type="submit"
                 variant="outline"
                 disabled={input.trim() === "" || isLoading}
-                className="m-0 fixed right-2 bottom-2 backdrop-blur-xl"
+                className={`m-0 fixed right-2 bottom-2 backdrop-blur-xl`}
               >
                 Send
               </Button>

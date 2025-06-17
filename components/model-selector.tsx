@@ -25,7 +25,7 @@ export function ModelSelector({ onModelSelect }: ModelSelectorProps) {
   const firstModel = firstLab.models[0];
 
   // Use the custom useModel hook to store the selected model id
-  const [modelId, setModelId] = useModel();
+  const { modelId, setModelId } = useModel();
 
   // Find the selected lab and model based on the current modelId
   const selected = (() => {

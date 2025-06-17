@@ -47,7 +47,7 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
   const { addChat, chats, currentChatId, setCurrentChatId, updateChatTitle } =
     useChatContext();
 
-  const [modelId] = useModel();
+  const { modelId, reasoningLevel } = useModel();
 
   /* ---------------------------------------------------------------------- */
   /* Local state + refs                                                     */
@@ -79,7 +79,7 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(
-          data?.error || data?.message || res.statusText || "Unknown error"
+          data?.error || data?.message || res.statusText || "Unknown error",
         );
       }
 
@@ -106,13 +106,39 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
     try {
       await navigator.clipboard.writeText(
         /* @ts-ignore */
-        message.parts[message.parts.length - 1].text
+        message.parts[message.parts.length - 1].text,
       );
     } catch (err: any) {
       toast.error("Failed to copy text", {
         description: err?.message || "An error occurred.",
         action: { label: "Hide", onClick: () => {} },
       });
+    }
+  };
+
+  const handleRetry = async (messageId: string) => {
+    const messageIndex = chatHook.messages.findIndex((m) => m.id === messageId);
+    if (messageIndex === -1) return;
+
+    const message = chatHook.messages[messageIndex];
+
+    if (message.role === "assistant") {
+      // For assistant messages, remove this message and regenerate
+      const messagesToKeep = chatHook.messages.slice(0, messageIndex);
+      chatHook.setMessages(messagesToKeep);
+      chatHook.reload();
+    } else if (message.role === "user") {
+      // For user messages, find the next assistant message and regenerate from this user message
+      const nextAssistantIndex = chatHook.messages.findIndex(
+        (m, idx) => idx > messageIndex && m.role === "assistant",
+      );
+
+      if (nextAssistantIndex !== -1) {
+        // Remove the assistant message and all subsequent messages
+        const messagesToKeep = chatHook.messages.slice(0, nextAssistantIndex);
+        chatHook.setMessages(messagesToKeep);
+        chatHook.reload();
+      }
     }
   };
 
@@ -130,7 +156,7 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
     id: currentChatId,
     initialMessages,
     sendExtraMessageFields: true,
-    body: { model: modelId },
+    body: { model: modelId, reasoning: reasoningLevel },
     onError: (error) =>
       toast.error("Failed to generate chat", {
         description: error?.message || "An error occurred.",
@@ -193,7 +219,7 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
 
   const handleFormSubmit = async (
     e: React.FormEvent,
-    msgAttachments?: Attachment[]
+    msgAttachments?: Attachment[],
   ) => {
     e.preventDefault();
 
@@ -302,7 +328,7 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
                               </div>
                             )}
                           </div>
-                        )
+                        ),
                       )}
                     </div>
                   )}
@@ -366,14 +392,14 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
                         onClick={() => {}}
                         icon={Split}
                         tabIndex={-1}
-                        aria-label="Split"
+                        aria-label="Branch"
                       />
                     )}
                     <IconButton
-                      onClick={() => {}}
+                      onClick={() => handleRetry(message.id)}
                       icon={IconRefresh}
                       tabIndex={-1}
-                      aria-label="Refresh"
+                      aria-label="Retry"
                     />
                   </div>
                 </div>
