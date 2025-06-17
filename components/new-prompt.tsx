@@ -26,7 +26,7 @@ interface Attachment {
 interface NewPromptProps {
   onSubmit: (
     e: React.FormEvent<HTMLFormElement>,
-    attachments: Attachment[]
+    attachments: Attachment[],
   ) => void;
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   input: string;
@@ -50,15 +50,15 @@ export default function NewPrompt({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [attachments, setAttachments] = useState<Attachment[]>(
-    externalAttachments || []
+    externalAttachments || [],
   );
 
   const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(
-    null
+    null,
   );
 
   const [preloadedImages, setPreloadedImages] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
 
   const { reasoningLevel, setReasoningLevel } = useModel();
@@ -189,7 +189,7 @@ export default function NewPrompt({
                       key={attachment.id}
                       className={cn(
                         "flex items-center gap-2 bg-background/50 rounded-md p-2 border border-border/30 relative",
-                        attachment.isUploading && "opacity-70"
+                        attachment.isUploading && "opacity-70",
                       )}
                     >
                       {/* Upload Progress Overlay */}
@@ -231,16 +231,17 @@ export default function NewPrompt({
                       </div>
 
                       <div className="flex gap-1">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0"
-                          onClick={() => openPreview(attachment)}
-                          disabled={attachment.isUploading}
-                        >
-                          <Eye className="h-3 w-3" />
-                        </Button>
+                        {!attachment.isUploading && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={() => openPreview(attachment)}
+                          >
+                            <Eye className="h-3 w-3" />
+                          </Button>
+                        )}
                         <Button
                           type="button"
                           variant="ghost"
@@ -302,7 +303,7 @@ export default function NewPrompt({
                             buttonVariants({
                               variant: "outline",
                               className: "text-foreground",
-                            })
+                            }),
                           )}
                         >
                           Upload
@@ -314,7 +315,7 @@ export default function NewPrompt({
                   onBeforeUploadBegin={(files) => {
                     // Add optimistic attachments immediately
                     const optimisticAttachments = files.map(
-                      createOptimisticAttachment
+                      createOptimisticAttachment,
                     );
                     setAttachments((prev) => {
                       const newAttachments = [
@@ -334,7 +335,7 @@ export default function NewPrompt({
                         try {
                           await preloadImage(file.url);
                           setPreloadedImages(
-                            (prev) => new Set([...prev, file.url])
+                            (prev) => new Set([...prev, file.url]),
                           );
                         } catch (error) {
                           console.warn("Failed to preload image:", file.url);
@@ -346,37 +347,61 @@ export default function NewPrompt({
 
                     // Replace optimistic attachments with real ones
                     setAttachments((prev) => {
-                      // Remove all uploading attachments and clean up blob URLs
+                      // Find uploading attachments and map them to uploaded ones
                       const uploadingAttachments = prev.filter(
-                        (att) => att.isUploading
+                        (att) => att.isUploading,
                       );
-                      uploadingAttachments.forEach((att) => {
-                        if (att.optimisticUrl?.startsWith("blob:")) {
-                          URL.revokeObjectURL(att.optimisticUrl);
+
+                      // Create mapping of uploaded files
+                      const uploadedMap = new Map(
+                        res.map((file, index) => [
+                          uploadingAttachments[index]?.id,
+                          {
+                            id: `uploaded-${Date.now()}-${Math.random()}`,
+                            url: file.url,
+                            name: file.name,
+                            size: file.size,
+                            type: file.type || "application/octet-stream",
+                            isUploading: false,
+                            optimisticUrl:
+                              uploadingAttachments[index]?.optimisticUrl,
+                          },
+                        ]),
+                      );
+
+                      // Update attachments, replacing uploading ones with uploaded ones
+                      const updatedAttachments = prev.map((att) => {
+                        if (att.isUploading && uploadedMap.has(att.id)) {
+                          const uploaded = uploadedMap.get(att.id)!;
+                          // Keep blob URL for smooth transition
+                          return uploaded;
                         }
+                        return att;
                       });
 
-                      const withoutUploading = prev.filter(
-                        (att) => !att.isUploading
-                      );
-
-                      // Add the successfully uploaded files
-                      const newAttachments = res.map((file) => ({
-                        id: `uploaded-${Date.now()}-${Math.random()}`,
-                        url: file.url,
-                        name: file.name,
-                        size: file.size,
-                        type: file.type || "application/octet-stream",
-                        isUploading: false,
-                      }));
-
-                      const finalAttachments = [
-                        ...withoutUploading,
-                        ...newAttachments,
-                      ];
-                      onAttachmentsChange?.(finalAttachments);
-                      return finalAttachments;
+                      onAttachmentsChange?.(updatedAttachments);
+                      return updatedAttachments;
                     });
+
+                    // Clean up blob URLs after a delay to allow smooth transition
+                    setTimeout(() => {
+                      setAttachments((prev) => {
+                        prev.forEach((att) => {
+                          if (
+                            att.optimisticUrl?.startsWith("blob:") &&
+                            !att.isUploading
+                          ) {
+                            URL.revokeObjectURL(att.optimisticUrl);
+                          }
+                        });
+                        return prev.map((att) => ({
+                          ...att,
+                          optimisticUrl: att.isUploading
+                            ? att.optimisticUrl
+                            : undefined,
+                        }));
+                      });
+                    }, 1000);
 
                     toast.success("Attachment uploaded!");
                   }}
@@ -384,7 +409,7 @@ export default function NewPrompt({
                     // Remove failed uploads and clean up blob URLs
                     setAttachments((prev) => {
                       const failedUploads = prev.filter(
-                        (att) => att.isUploading
+                        (att) => att.isUploading,
                       );
                       failedUploads.forEach((att) => {
                         if (att.optimisticUrl?.startsWith("blob:")) {
@@ -392,7 +417,7 @@ export default function NewPrompt({
                         }
                       });
                       const filteredAttachments = prev.filter(
-                        (att) => !att.isUploading
+                        (att) => !att.isUploading,
                       );
                       onAttachmentsChange?.(filteredAttachments);
                       return filteredAttachments;
@@ -414,8 +439,8 @@ export default function NewPrompt({
                       prev.map((att) =>
                         att.isUploading
                           ? { ...att, uploadProgress: progress }
-                          : att
-                      )
+                          : att,
+                      ),
                     );
                   }}
                 />

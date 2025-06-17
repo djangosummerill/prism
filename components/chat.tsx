@@ -197,7 +197,10 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
     }
 
     // Update the message content
+    // Optimistically update the UI first
     const updatedMessages = [...chatHook.messages];
+    const originalMessage = updatedMessages[messageIndex];
+
     updatedMessages[messageIndex] = {
       ...updatedMessages[messageIndex],
       content: editingContent,
@@ -208,6 +211,7 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
     const messagesToKeep = updatedMessages.slice(0, messageIndex + 1);
 
     // Update messages and regenerate response
+    // Update messages immediately for optimistic UI
     chatHook.setMessages(messagesToKeep);
     setEditingMessageId(null);
     setEditingContent("");
@@ -215,6 +219,28 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
     // Trigger regeneration if this was a user message
     if (updatedMessages[messageIndex].role === "user") {
       chatHook.reload();
+      try {
+        // Delete messages from database starting from the edited message
+        if (currentChatId) {
+          await deleteMessagesFromIndex(currentChatId, messageIndex);
+        }
+
+        // Trigger regeneration if this was a user message
+        if (updatedMessages[messageIndex].role === "user") {
+          chatHook.reload();
+        }
+      } catch (error) {
+        // Rollback on error
+        chatHook.setMessages([...chatHook.messages]);
+        setEditingMessageId(messageId);
+        setEditingContent(originalMessage.content);
+
+        toast.error("Failed to save edit", {
+          description:
+            error instanceof Error ? error.message : "An error occurred.",
+          action: { label: "Hide", onClick: () => {} },
+        });
+      }
     }
   };
 
@@ -257,11 +283,12 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
         message.annotations = [{ model: modelId }];
       }
     },
-    onError: (error) =>
+    onError: (error) => {
       toast.error("Failed to generate chat", {
         description: error?.message || "An error occurred.",
         action: { label: "Hide", onClick: () => {} },
-      }),
+      });
+    },
   });
 
   /* ---------------------------------------------------------------------- */
@@ -352,24 +379,24 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
           : undefined,
       });
 
-      // Add optimistic assistant message with loading indicator
-      chatHook.append({
-        role: "assistant",
-        content: "",
-        parts: [],
-        annotations: [{ model: modelId }],
-      });
-
       setAttachments([]);
       return;
     }
 
     /* new chat – create first */
     pendingSubmit.current = { event: e, attachments: msgAttachments };
-    const { id, chat } = await createChat();
-    setCurrentChatId(id);
-    addChat(chat);
-    router.push(`/chat/${id}`);
+    try {
+      const { id, chat } = await createChat();
+      setCurrentChatId(id);
+      addChat(chat);
+      router.push(`/chat/${id}`);
+    } catch (error) {
+      toast.error("Failed to create chat", {
+        description:
+          error instanceof Error ? error.message : "An error occurred.",
+        action: { label: "Hide", onClick: () => {} },
+      });
+    }
   };
 
   /* ---------------------------------------------------------------------- */
@@ -564,7 +591,10 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
                           }
 
                           return null;
-                        })}
+                        }) ||
+                          (message.content && (
+                            <Markdown>{message.content}</Markdown>
+                          ))}
                       </div>
                     )}
                   </div>

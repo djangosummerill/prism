@@ -17,9 +17,6 @@ export const ourFileRouter = {
        */
       maxFileSize: "4MB",
     },
-    text: {
-      maxFileSize: "1MB",
-    },
   })
     // Set permissions and file types for this FileRoute
     /*.middleware(async ({ req }) => {
