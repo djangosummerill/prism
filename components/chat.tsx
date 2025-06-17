@@ -64,6 +64,8 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
   const [promptHeight, setPromptHeight] = useState(80);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [previewAttachment, setPreviewAttachment] = useState<any | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState("");
 
   /* ---------------------------------------------------------------------- */
   /* Helpers                                                                */
@@ -140,6 +142,97 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
         chatHook.setMessages(messagesToKeep);
         chatHook.reload();
       }
+    }
+  };
+
+  const handleEditMessage = (message: Message) => {
+    setEditingMessageId(message.id);
+    // Extract text content from message parts
+    const textContent =
+      message.parts
+        ?.filter((part) => part.type === "text")
+        .map((part) => part.text)
+        .join("") || message.content;
+    setEditingContent(textContent);
+  };
+
+  // Add this helper function in your Chat component
+  const deleteMessagesFromIndex = async (
+    chatId: string,
+    messageIndex: number
+  ) => {
+    try {
+      const response = await fetch("/api/deletemessages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chatId,
+          fromIndex: messageIndex,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete messages");
+      }
+    } catch (error) {
+      console.error("Error deleting messages:", error);
+      toast.error("Failed to delete old messages", {
+        description:
+          "The conversation will continue, but old messages may remain in history.",
+        action: { label: "Hide", onClick: () => {} },
+      });
+    }
+  };
+
+  // Update your handleSaveEdit function
+  const handleSaveEdit = async (messageId: string) => {
+    if (!editingContent.trim()) return;
+
+    const messageIndex = chatHook.messages.findIndex((m) => m.id === messageId);
+    if (messageIndex === -1) return;
+
+    // Delete messages from database starting from the edited message
+    if (currentChatId) {
+      await deleteMessagesFromIndex(currentChatId, messageIndex);
+    }
+
+    // Update the message content
+    const updatedMessages = [...chatHook.messages];
+    updatedMessages[messageIndex] = {
+      ...updatedMessages[messageIndex],
+      content: editingContent,
+      parts: [{ type: "text", text: editingContent }],
+    };
+
+    // Remove all messages after the edited message
+    const messagesToKeep = updatedMessages.slice(0, messageIndex + 1);
+
+    // Update messages and regenerate response
+    chatHook.setMessages(messagesToKeep);
+    setEditingMessageId(null);
+    setEditingContent("");
+
+    // Trigger regeneration if this was a user message
+    if (updatedMessages[messageIndex].role === "user") {
+      chatHook.reload();
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMessageId(null);
+    setEditingContent("");
+  };
+
+  const handleEditKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      handleSaveEdit(editingMessageId!);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      handleCancelEdit();
+    } else if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSaveEdit(editingMessageId!);
     }
   };
 
@@ -357,31 +450,80 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
                   <div
                     className={`space-y-2 ${
                       message.role === "user"
-                        ? "ml-auto w-fit max-w-5/6 rounded-2xl border border-muted-foreground/20 bg-muted p-4 text-primary outline-0"
+                        ? editingMessageId === message.id
+                          ? "w-5/6 ml-auto"
+                          : "ml-auto w-fit max-w-5/6 rounded-2xl border border-muted-foreground/20 bg-muted p-4 text-primary outline-0"
                         : "w-fit"
                     }`}
                   >
-                    <div className="prose max-w-none whitespace-pre-wrap leading-relaxed prose-stone dark:prose-invert">
-                      {message.parts?.map((part, idx) => {
-                        const key = `msg-${message.id}-part-${idx}`;
+                    {editingMessageId === message.id ? (
+                      // Edit mode - styled like the prompt
+                      <div className="bg-accent/20 backdrop-blur-sm border-border border rounded-md p-1">
+                        <textarea
+                          value={editingContent}
+                          onChange={(e) => setEditingContent(e.target.value)}
+                          onKeyDown={handleEditKeyDown}
+                          className="w-full resize-none bg-transparent border-none outline-none p-4"
+                          rows={1}
+                          style={{
+                            minHeight: "1.5rem",
+                            maxHeight: "13.5rem",
+                            overflowY: "auto",
+                          }}
+                          onInput={(e) => {
+                            const target = e.target as HTMLTextAreaElement;
+                            target.style.height = "auto";
+                            target.style.height =
+                              Math.min(target.scrollHeight, 240) + "px";
+                          }}
+                          autoFocus
+                          placeholder="Edit your message..."
+                        />
+                        <div className="flex justify-end pr-5 pb-2">
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={handleCancelEdit}
+                              className="h-7 px-2 text-xs"
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => handleSaveEdit(message.id)}
+                              disabled={!editingContent.trim()}
+                              className="h-7 px-2 text-xs"
+                            >
+                              Save & Regenerate
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      // Display mode
+                      <div className="prose max-w-none whitespace-pre-wrap leading-relaxed prose-stone dark:prose-invert">
+                        {message.parts?.map((part, idx) => {
+                          const key = `msg-${message.id}-part-${idx}`;
 
-                        if (part.type === "reasoning") {
-                          return (
-                            <MessageReasoning
-                              key={key}
-                              isLoading={chatHook.status === "streaming"}
-                              reasoning={part.reasoning}
-                            />
-                          );
-                        }
+                          if (part.type === "reasoning") {
+                            return (
+                              <MessageReasoning
+                                key={key}
+                                isLoading={chatHook.status === "streaming"}
+                                reasoning={part.reasoning}
+                              />
+                            );
+                          }
 
-                        if (part.type === "text") {
-                          return <Markdown key={key}>{part.text}</Markdown>;
-                        }
+                          if (part.type === "text") {
+                            return <Markdown key={key}>{part.text}</Markdown>;
+                          }
 
-                        return null;
-                      })}
-                    </div>
+                          return null;
+                        })}
+                      </div>
+                    )}
                   </div>
 
                   {/* ----------------------------------------------------- */}
@@ -400,10 +542,11 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
                     />
                     {message.role === "user" ? (
                       <IconButton
-                        onClick={() => {}}
+                        onClick={() => handleEditMessage(message)}
                         icon={Edit}
                         tabIndex={-1}
                         aria-label="Edit"
+                        disabled={editingMessageId !== null}
                       />
                     ) : (
                       <IconButton
