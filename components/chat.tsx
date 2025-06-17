@@ -7,7 +7,7 @@ import { Message, useChat } from "@ai-sdk/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useChatContext } from "@/lib/chat-context";
-import { Copy, Edit, Split, X, Download } from "lucide-react";
+import { Copy, Edit, Split, X, Download, Loader2 } from "lucide-react";
 import { IconRefresh } from "@tabler/icons-react";
 import IconButton from "./chat-button";
 import Markdown from "marked-react";
@@ -446,6 +446,9 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
     }
   }, [chatHook.messages, isAtBottom]);
 
+  const lastMessage = chatHook.messages[chatHook.messages.length - 1];
+  const waitingForAssistant = lastMessage?.role === "user";
+
   return (
     <>
       <div className="flex h-[calc(100vh-1rem)] flex-col">
@@ -658,6 +661,12 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
                 </div>
               );
             })}
+            {waitingForAssistant && (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Loading</span>
+              </div>
+            )}
           </div>
 
           {/* Prompt ------------------------------------------------------- */}
