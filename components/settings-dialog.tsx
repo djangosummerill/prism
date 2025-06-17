@@ -53,11 +53,6 @@ import BYOK from "./settings/pages/byok";
 const data = {
   nav: [
     {
-      name: "General",
-      icon: Settings,
-      content: <General />,
-    },
-    {
       name: "Appearance",
       icon: PaintBucket,
       content: <Appearance />,
@@ -78,7 +73,7 @@ export function SettingsDialog({
   setOpen: (open: boolean) => void;
 }) {
   // Track the selected tab
-  const [selectedTab, setSelectedTab] = React.useState("General");
+  const [selectedTab, setSelectedTab] = React.useState("Appearance");
 
   // Find the selected nav item
   const selectedNav = data.nav.find((item) => item.name === selectedTab);

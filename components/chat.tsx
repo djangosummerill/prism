@@ -303,16 +303,25 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
 
   /* auto-title the very first user message */
   useEffect(() => {
+    if (!currentChatId) return;
+
+    // Find the current chat object
+    const currentChat = chats.find((c) => c.id === currentChatId);
+
+    // Only auto-title if:
+    // - The chat exists
+    // - The chat has no title or a default/untitled title
+    // - The chat has exactly one user message
+    // - That message is a user message
     if (
-      currentChatId &&
+      currentChat &&
+      (!currentChat.title || currentChat.title === "Untitled Chat") &&
       chatHook.messages?.length === 1 &&
-      chatHook.messages[0].role === "user" &&
-      !titlesGenerated.current.has(currentChatId)
+      chatHook.messages[0].role === "user"
     ) {
-      titlesGenerated.current.add(currentChatId);
       generateTitle(chatHook.messages[0].content, currentChatId);
     }
-  }, [chatHook.messages, currentChatId]);
+  }, [chatHook.messages, currentChatId, chats]);
 
   /* ---------------------------------------------------------------------- */
   /* Handlers                                                               */

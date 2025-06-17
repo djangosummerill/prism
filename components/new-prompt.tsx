@@ -301,7 +301,7 @@ export default function NewPrompt({
                           className={cn(
                             buttonVariants({
                               variant: "outline",
-                              className: "text-primary",
+                              className: "text-foreground",
                             })
                           )}
                         >
@@ -432,7 +432,7 @@ export default function NewPrompt({
                 type="submit"
                 variant="outline"
                 disabled={input.trim() === "" || isLoading}
-                className={`m-0 fixed right-2 bottom-2 backdrop-blur-xl`}
+                className={`m-0 fixed right-2 bottom-2 backdrop-blur-xl text-primary`}
               >
                 Send
               </Button>
