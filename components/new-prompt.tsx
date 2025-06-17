@@ -446,7 +446,7 @@ export default function NewPrompt({
                 />
                 {reasoning && (
                   <ReasoningSelector
-                    showNone={true}
+                    showNone={false}
                     value={reasoningLevel}
                     onValueChange={setReasoningLevel}
                     className="mt-1 ml-2"
