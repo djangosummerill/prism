@@ -591,6 +591,7 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
             onHeightChange={setPromptHeight}
             attachments={attachments}
             onAttachmentsChange={setAttachments}
+            reasoning={getModelById(modelId)?.reasoning || false}
           />
         </div>
       </div>

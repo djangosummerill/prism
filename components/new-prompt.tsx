@@ -34,6 +34,7 @@ interface NewPromptProps {
   onHeightChange?: (height: number) => void;
   attachments?: Attachment[];
   onAttachmentsChange?: (attachments: Attachment[]) => void;
+  reasoning: boolean;
 }
 
 export default function NewPrompt({
@@ -44,6 +45,7 @@ export default function NewPrompt({
   onHeightChange,
   attachments: externalAttachments,
   onAttachmentsChange,
+  reasoning,
 }: NewPromptProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -286,6 +288,7 @@ export default function NewPrompt({
                     },
                     button: {
                       marginTop: "2px",
+                      marginLeft: "4px",
                     },
                   }}
                   content={{
@@ -416,12 +419,14 @@ export default function NewPrompt({
                     );
                   }}
                 />
-                <ReasoningSelector
-                  showNone={true}
-                  value={reasoningLevel}
-                  onValueChange={setReasoningLevel}
-                  className="mt-1 ml-2"
-                />
+                {reasoning && (
+                  <ReasoningSelector
+                    showNone={true}
+                    value={reasoningLevel}
+                    onValueChange={setReasoningLevel}
+                    className="mt-1 ml-2"
+                  />
+                )}
               </div>
               <Button
                 type="submit"
