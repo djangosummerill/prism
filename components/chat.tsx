@@ -365,6 +365,7 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
       behavior: "auto", // instant scroll
     });
     setIsAtBottom(true); // update state so future messages auto-scroll
+    setInstant(true);
   }, [currentChatId]);
 
   /* ---------------------------------------------------------------------- */
@@ -433,6 +434,7 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
   // 1. Add refs and state
   const chatBodyRef = useRef<HTMLDivElement>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
+  const [instant, setInstant] = useState(false);
 
   // 2. Track scroll position
   useEffect(() => {
@@ -459,8 +461,10 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
       const chatBody = chatBodyRef.current;
       chatBody.scrollTo({
         top: chatBody.scrollHeight,
-        behavior: "smooth",
+        behavior:
+          chatHook.status === "streaming" || instant ? "instant" : "smooth",
       });
+      setInstant(false);
     }
   }, [chatHook.messages, isAtBottom]);
 
