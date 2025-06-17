@@ -349,6 +349,16 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
     }
   }, [chatHook.messages, currentChatId, chats]);
 
+  useEffect(() => {
+    if (!chatBodyRef.current) return;
+    // Instantly scroll to bottom when chat changes
+    chatBodyRef.current.scrollTo({
+      top: chatBodyRef.current.scrollHeight + 40,
+      behavior: "auto", // instant scroll
+    });
+    setIsAtBottom(true); // update state so future messages auto-scroll
+  }, [currentChatId]);
+
   /* ---------------------------------------------------------------------- */
   /* Handlers                                                               */
   /* ---------------------------------------------------------------------- */
