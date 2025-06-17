@@ -380,6 +380,40 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
   const chatName =
     currentChat?.title || (currentChatId ? "Untitled Chat" : "New Chat");
 
+  // 1. Add refs and state
+  const chatBodyRef = useRef<HTMLDivElement>(null);
+  const [isAtBottom, setIsAtBottom] = useState(true);
+
+  // 2. Track scroll position
+  useEffect(() => {
+    const chatBody = chatBodyRef.current;
+    if (!chatBody) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = chatBody;
+      setIsAtBottom(scrollTop + clientHeight >= scrollHeight - 10);
+    };
+
+    chatBody.addEventListener("scroll", handleScroll);
+    handleScroll();
+
+    return () => {
+      chatBody.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  // 3. Scroll to bottom on new messages if at bottom
+  useEffect(() => {
+    if (!chatBodyRef.current) return;
+    if (isAtBottom) {
+      const chatBody = chatBodyRef.current;
+      chatBody.scrollTo({
+        top: chatBody.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  }, [chatHook.messages, isAtBottom]);
+
   return (
     <>
       <div className="flex h-[calc(100vh-1rem)] flex-col">
@@ -393,7 +427,7 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
         </div>
 
         {/* Body ------------------------------------------------------------ */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto" ref={chatBodyRef}>
           <div
             className="mx-auto w-full max-w-3xl px-6 pt-6"
             style={{

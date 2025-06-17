@@ -176,7 +176,7 @@ export default function NewPrompt({
     <>
       <div
         ref={containerRef}
-        className="w-full fixed left-64 bottom-2 pr-64 flex justify-center z-10"
+        className="w-full absolute bottom-0 left-0 flex justify-center z-10"
       >
         <div className="bg-accent/20 backdrop-blur-sm w-3xl border-border border-1 rounded-md mb-4 p-1">
           <form onSubmit={(e) => onSubmit(e, attachments)}>
