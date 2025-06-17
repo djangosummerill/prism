@@ -7,7 +7,15 @@ import { Message, useChat } from "@ai-sdk/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useChatContext } from "@/lib/chat-context";
-import { Copy, Edit, Split, X, Download, Loader2 } from "lucide-react";
+import {
+  Copy,
+  Edit,
+  Split,
+  X,
+  Download,
+  Loader2,
+  ChevronDown,
+} from "lucide-react";
 import { IconRefresh } from "@tabler/icons-react";
 import IconButton from "./chat-button";
 import Markdown from "marked-react";
@@ -680,6 +688,35 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
           </div>
 
           {/* Prompt ------------------------------------------------------- */}
+          {!isAtBottom && (
+            <div
+              className="w-full flex justify-center pointer-events-none"
+              style={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                bottom: promptHeight + 24, // 24px above the prompt
+                zIndex: 20,
+              }}
+            >
+              <button
+                className="pointer-events-auto flex items-center gap-2 px-4 py-2 rounded-full bg-background border shadow-md hover:bg-accent transition"
+                onClick={() => {
+                  if (chatBodyRef.current) {
+                    chatBodyRef.current.scrollTo({
+                      top: chatBodyRef.current.scrollHeight,
+                      behavior: "smooth",
+                    });
+                  }
+                }}
+                aria-label="Scroll to bottom"
+                type="button"
+              >
+                <ChevronDown className="w-5 h-5" />
+                <span className="font-medium text-sm">Scroll to bottom</span>
+              </button>
+            </div>
+          )}
           <NewPrompt
             input={chatHook.input ?? ""}
             handleInputChange={chatHook.handleInputChange ?? (() => {})}
