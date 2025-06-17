@@ -57,6 +57,7 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
   const pendingSubmit = useRef<{
     event: React.FormEvent;
     attachments?: Attachment[];
+    text: string;
   } | null>(null);
 
   const titlesGenerated = useRef<Set<string>>(new Set());
@@ -302,16 +303,13 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
     }
   }, [chatId, currentChatId, setCurrentChatId]);
 
-  /* flush pending form submit once we have an id */
   useEffect(() => {
     if (currentChatId && pendingSubmit.current && chatHook) {
-      const { attachments: pendingAtt } = pendingSubmit.current;
-
-      const text = chatHook.input || "";
+      const { attachments: pendingAtt, text } = pendingSubmit.current;
 
       chatHook.append({
         role: "user",
-        content: text,
+        content: text, // Use the captured text
         parts: [{ type: "text", text }],
         annotations: [{ model: modelId }],
         experimental_attachments: pendingAtt?.length
@@ -323,6 +321,7 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
           : undefined,
       });
 
+      chatHook.setInput("");
       setAttachments([]);
       pendingSubmit.current = null;
     }
@@ -360,14 +359,18 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
   ) => {
     e.preventDefault();
 
+    // Capture the input value BEFORE clearing
     const text = chatHook.input || "";
 
     if (!text.trim() && !(msgAttachments?.length ?? 0)) return;
 
+    // Clear input immediately for optimistic UI
+    chatHook.setInput("");
+
     if (!newChat && currentChatId) {
       chatHook.append({
         role: "user",
-        content: text,
+        content: text, // Use captured value
         parts: [{ type: "text", text }],
         annotations: [{ model: modelId }],
         experimental_attachments: msgAttachments?.length
@@ -384,13 +387,15 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
     }
 
     /* new chat – create first */
-    pendingSubmit.current = { event: e, attachments: msgAttachments };
+    pendingSubmit.current = { event: e, attachments: msgAttachments, text }; // Pass text here
     try {
       const { id, chat } = await createChat();
       setCurrentChatId(id);
       addChat(chat);
       router.push(`/chat/${id}`);
     } catch (error) {
+      // Restore input on error
+      chatHook.setInput(text);
       toast.error("Failed to create chat", {
         description:
           error instanceof Error ? error.message : "An error occurred.",
