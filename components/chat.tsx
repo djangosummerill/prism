@@ -80,7 +80,7 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(
-          data?.error || data?.message || res.statusText || "Unknown error",
+          data?.error || data?.message || res.statusText || "Unknown error"
         );
       }
 
@@ -107,7 +107,7 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
     try {
       await navigator.clipboard.writeText(
         /* @ts-ignore */
-        message.parts[message.parts.length - 1].text,
+        message.parts[message.parts.length - 1].text
       );
     } catch (err: any) {
       toast.error("Failed to copy text", {
@@ -131,7 +131,7 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
     } else if (message.role === "user") {
       // For user messages, find the next assistant message and regenerate from this user message
       const nextAssistantIndex = chatHook.messages.findIndex(
-        (m, idx) => idx > messageIndex && m.role === "assistant",
+        (m, idx) => idx > messageIndex && m.role === "assistant"
       );
 
       if (nextAssistantIndex !== -1) {
@@ -158,6 +158,12 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
     initialMessages,
     sendExtraMessageFields: true,
     body: { model: modelId, reasoning: reasoningLevel },
+    onFinish: (message) => {
+      // Add model annotation to the assistant message
+      if (message.role === "assistant") {
+        message.annotations = [{ model: modelId }];
+      }
+    },
     onError: (error) =>
       toast.error("Failed to generate chat", {
         description: error?.message || "An error occurred.",
@@ -221,7 +227,7 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
 
   const handleFormSubmit = async (
     e: React.FormEvent,
-    msgAttachments?: Attachment[],
+    msgAttachments?: Attachment[]
   ) => {
     e.preventDefault();
 
@@ -340,7 +346,7 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
                               </div>
                             )}
                           </div>
-                        ),
+                        )
                       )}
                     </div>
                   )}
@@ -356,50 +362,25 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
                     }`}
                   >
                     <div className="prose max-w-none whitespace-pre-wrap leading-relaxed prose-stone dark:prose-invert">
-                      {message.role === "assistant" &&
-                      (!message.parts ||
-                        message.parts.length === 0 ||
-                        message.parts.every(
-                          (part) => !part.text && !part.reasoning,
-                        )) ? (
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <div className="flex space-x-1">
-                            <div
-                              className="w-2 h-2 bg-current rounded-full animate-bounce"
-                              style={{ animationDelay: "0ms" }}
-                            ></div>
-                            <div
-                              className="w-2 h-2 bg-current rounded-full animate-bounce"
-                              style={{ animationDelay: "150ms" }}
-                            ></div>
-                            <div
-                              className="w-2 h-2 bg-current rounded-full animate-bounce"
-                              style={{ animationDelay: "300ms" }}
-                            ></div>
-                          </div>
-                          <span className="text-sm">Thinking...</span>
-                        </div>
-                      ) : (
-                        message.parts?.map((part, idx) => {
-                          const key = `msg-${message.id}-part-${idx}`;
+                      {message.parts?.map((part, idx) => {
+                        const key = `msg-${message.id}-part-${idx}`;
 
-                          if (part.type === "reasoning") {
-                            return (
-                              <MessageReasoning
-                                key={key}
-                                isLoading={chatHook.status === "streaming"}
-                                reasoning={part.reasoning}
-                              />
-                            );
-                          }
+                        if (part.type === "reasoning") {
+                          return (
+                            <MessageReasoning
+                              key={key}
+                              isLoading={chatHook.status === "streaming"}
+                              reasoning={part.reasoning}
+                            />
+                          );
+                        }
 
-                          if (part.type === "text") {
-                            return <Markdown key={key}>{part.text}</Markdown>;
-                          }
+                        if (part.type === "text") {
+                          return <Markdown key={key}>{part.text}</Markdown>;
+                        }
 
-                          return null;
-                        })
-                      )}
+                        return null;
+                      })}
                     </div>
                   </div>
 
@@ -442,15 +423,13 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
                       <span className="text-xs text-muted-foreground font-medium">
                         {(() => {
                           const messageModel = message.annotations?.[0]?.model;
-                          const fallbackModel =
-                            message.role === "assistant" && !messageModel
-                              ? modelId
-                              : messageModel;
-                          return (
-                            getModelById(fallbackModel)?.name ||
-                            fallbackModel ||
-                            "Unknown"
-                          );
+                          if (messageModel) {
+                            return (
+                              getModelById(messageModel)?.name || messageModel
+                            );
+                          }
+                          // Only show "Unknown" if no model is stored with the message
+                          return getModelById(modelId)?.name || "Unknown";
                         })()}
                       </span>
                     )}
