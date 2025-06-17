@@ -2,7 +2,7 @@
 "use client";
 
 import { ChatHeader } from "@/components/chat-header";
-import { createChat, renameChat } from "@/lib/chat-store";
+import { branchChat, createChat, renameChat } from "@/lib/chat-store";
 import { Message, useChat } from "@ai-sdk/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -424,6 +424,26 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
   /* Handlers                                                               */
   /* ---------------------------------------------------------------------- */
 
+  const handleBranch = async (messageId: string) => {
+    try {
+      const currentChat = chats.find((c) => c.id === currentChatId);
+      const { id: newChatId, chat: newChat } = await branchChat(
+        chatHook.messages,
+        messageId,
+        currentChat?.title // pass the title here
+      );
+      addChat(newChat);
+      setCurrentChatId(newChatId);
+      router.push(`/chat/${newChatId}`);
+    } catch (error) {
+      toast.error("Failed to branch chat", {
+        description:
+          error instanceof Error ? error.message : "An error occurred.",
+        action: { label: "Hide", onClick: () => {} },
+      });
+    }
+  };
+
   const handleFormSubmit = async (
     e: React.FormEvent,
     msgAttachments?: Attachment[]
@@ -705,7 +725,7 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
                       />
                     ) : (
                       <IconButton
-                        onClick={() => {}}
+                        onClick={() => handleBranch(message.id)}
                         icon={Split}
                         tabIndex={-1}
                         aria-label="Branch"

@@ -18,7 +18,7 @@ export async function createChat(
 
   const { data, error } = await supabase
     .from("chats")
-    .insert({ user_id: user.id })
+    .insert({ user_id: user.id, title })
     .select("*")
     .single();
 
@@ -108,4 +108,58 @@ export async function renameChat(id: string, title: string): Promise<void> {
   if (error) {
     throw new Error(`Failed to rename chat: ${error.message}`);
   }
+}
+
+async function saveMessage(
+  message: Message,
+  chatId: string,
+  model: string = ""
+) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+  if (userError || !user) {
+    throw new Error("User not authenticated");
+  }
+
+  const content = {
+    parts: message.parts || [],
+    experimental_attachments: message.experimental_attachments || [],
+  };
+
+  const { error } = await supabase.from("messages").insert({
+    chat_id: chatId,
+    role: message.role,
+    content: content,
+    model: model,
+    created_at: message.createdAt ?? new Date().toISOString(),
+  });
+
+  if (error) {
+    throw new Error(`Failed to save message: ${error.message}`);
+  }
+}
+
+export async function branchChat(
+  messages: Message[],
+  branchMessageId: string,
+  originalTitle?: string // <-- add this
+): Promise<{ id: string; chat: any }> {
+  const branchIndex = messages.findIndex((m) => m.id === branchMessageId);
+  if (branchIndex === -1) throw new Error("Message not found");
+
+  const branchedMessages = messages.slice(0, branchIndex + 1);
+
+  // Pass the original title to createChat
+  const { id: newChatId, chat: newChat } = await createChat(
+    `(BRANCH) ${originalTitle}`
+  );
+
+  for (const msg of branchedMessages) {
+    await saveMessage(msg, newChatId, msg.annotations?.[0]?.model || "");
+  }
+
+  return { id: newChatId, chat: newChat };
 }
