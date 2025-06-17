@@ -16,6 +16,7 @@ import NewPrompt from "./new-prompt";
 import { useModel } from "@/hooks/use-model";
 import { MessageReasoning } from "./message-reasoning";
 import { Button } from "@/components/ui/button";
+import { getModelById } from "@/lib/models";
 
 /* -------------------------------------------------------------------------- */
 /* Types                                                                      */
@@ -186,6 +187,7 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
         role: "user",
         content: text,
         parts: [{ type: "text", text }],
+        annotations: [{ model: modelId }],
         experimental_attachments: pendingAtt?.length
           ? pendingAtt.map((a) => ({
               name: a.name,
@@ -232,6 +234,7 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
         role: "user",
         content: text,
         parts: [{ type: "text", text }],
+        annotations: [{ model: modelId }],
         experimental_attachments: msgAttachments?.length
           ? msgAttachments.map((a) => ({
               name: a.name,
@@ -240,6 +243,15 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
             }))
           : undefined,
       });
+
+      // Add optimistic assistant message with loading indicator
+      chatHook.append({
+        role: "assistant",
+        content: "",
+        parts: [],
+        annotations: [{ model: modelId }],
+      });
+
       setAttachments([]);
       return;
     }
@@ -344,25 +356,50 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
                     }`}
                   >
                     <div className="prose max-w-none whitespace-pre-wrap leading-relaxed prose-stone dark:prose-invert">
-                      {message.parts?.map((part, idx) => {
-                        const key = `msg-${message.id}-part-${idx}`;
+                      {message.role === "assistant" &&
+                      (!message.parts ||
+                        message.parts.length === 0 ||
+                        message.parts.every(
+                          (part) => !part.text && !part.reasoning,
+                        )) ? (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <div className="flex space-x-1">
+                            <div
+                              className="w-2 h-2 bg-current rounded-full animate-bounce"
+                              style={{ animationDelay: "0ms" }}
+                            ></div>
+                            <div
+                              className="w-2 h-2 bg-current rounded-full animate-bounce"
+                              style={{ animationDelay: "150ms" }}
+                            ></div>
+                            <div
+                              className="w-2 h-2 bg-current rounded-full animate-bounce"
+                              style={{ animationDelay: "300ms" }}
+                            ></div>
+                          </div>
+                          <span className="text-sm">Thinking...</span>
+                        </div>
+                      ) : (
+                        message.parts?.map((part, idx) => {
+                          const key = `msg-${message.id}-part-${idx}`;
 
-                        if (part.type === "reasoning") {
-                          return (
-                            <MessageReasoning
-                              key={key}
-                              isLoading={chatHook.status === "streaming"}
-                              reasoning={part.reasoning}
-                            />
-                          );
-                        }
+                          if (part.type === "reasoning") {
+                            return (
+                              <MessageReasoning
+                                key={key}
+                                isLoading={chatHook.status === "streaming"}
+                                reasoning={part.reasoning}
+                              />
+                            );
+                          }
 
-                        if (part.type === "text") {
-                          return <Markdown key={key}>{part.text}</Markdown>;
-                        }
+                          if (part.type === "text") {
+                            return <Markdown key={key}>{part.text}</Markdown>;
+                          }
 
-                        return null;
-                      })}
+                          return null;
+                        })
+                      )}
                     </div>
                   </div>
 
@@ -401,6 +438,22 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
                       tabIndex={-1}
                       aria-label="Retry"
                     />
+                    {message.role == "assistant" && (
+                      <span className="text-xs text-muted-foreground font-medium">
+                        {(() => {
+                          const messageModel = message.annotations?.[0]?.model;
+                          const fallbackModel =
+                            message.role === "assistant" && !messageModel
+                              ? modelId
+                              : messageModel;
+                          return (
+                            getModelById(fallbackModel)?.name ||
+                            fallbackModel ||
+                            "Unknown"
+                          );
+                        })()}
+                      </span>
+                    )}
                   </div>
                 </div>
               );

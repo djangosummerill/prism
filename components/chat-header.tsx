@@ -84,7 +84,7 @@ export function ChatHeader({
   const getClickTextOffset = (
     e: MouseEvent,
     node: ChildNode,
-    container: HTMLElement
+    container: HTMLElement,
   ) => {
     const text = node.nodeValue!;
     const clickX = e.clientX;
