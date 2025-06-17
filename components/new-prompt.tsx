@@ -26,7 +26,7 @@ interface Attachment {
 interface NewPromptProps {
   onSubmit: (
     e: React.FormEvent<HTMLFormElement>,
-    attachments: Attachment[],
+    attachments: Attachment[]
   ) => void;
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   input: string;
@@ -50,15 +50,15 @@ export default function NewPrompt({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [attachments, setAttachments] = useState<Attachment[]>(
-    externalAttachments || [],
+    externalAttachments || []
   );
 
   const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(
-    null,
+    null
   );
 
   const [preloadedImages, setPreloadedImages] = useState<Set<string>>(
-    new Set(),
+    new Set()
   );
 
   const { reasoningLevel, setReasoningLevel } = useModel();
@@ -178,7 +178,7 @@ export default function NewPrompt({
         ref={containerRef}
         className="w-full absolute bottom-0 left-0 flex justify-center z-10"
       >
-        <div className="bg-accent/20 backdrop-blur-sm w-3xl border-border border-1 rounded-md mb-4 p-1">
+        <div className="bg-accent/10 backdrop-blur-sm w-3xl border-border border-1 rounded-md mb-4 p-1">
           <form onSubmit={(e) => onSubmit(e, attachments)}>
             {/* Attachments Preview */}
             {attachments.length > 0 && (
@@ -189,7 +189,7 @@ export default function NewPrompt({
                       key={attachment.id}
                       className={cn(
                         "flex items-center gap-2 bg-background/50 rounded-md p-2 border border-border/30 relative",
-                        attachment.isUploading && "opacity-70",
+                        attachment.isUploading && "opacity-70"
                       )}
                     >
                       {/* Upload Progress Overlay */}
@@ -303,7 +303,7 @@ export default function NewPrompt({
                             buttonVariants({
                               variant: "outline",
                               className: "text-foreground",
-                            }),
+                            })
                           )}
                         >
                           Upload
@@ -315,7 +315,7 @@ export default function NewPrompt({
                   onBeforeUploadBegin={(files) => {
                     // Add optimistic attachments immediately
                     const optimisticAttachments = files.map(
-                      createOptimisticAttachment,
+                      createOptimisticAttachment
                     );
                     setAttachments((prev) => {
                       const newAttachments = [
@@ -335,7 +335,7 @@ export default function NewPrompt({
                         try {
                           await preloadImage(file.url);
                           setPreloadedImages(
-                            (prev) => new Set([...prev, file.url]),
+                            (prev) => new Set([...prev, file.url])
                           );
                         } catch (error) {
                           console.warn("Failed to preload image:", file.url);
@@ -349,7 +349,7 @@ export default function NewPrompt({
                     setAttachments((prev) => {
                       // Find uploading attachments and map them to uploaded ones
                       const uploadingAttachments = prev.filter(
-                        (att) => att.isUploading,
+                        (att) => att.isUploading
                       );
 
                       // Create mapping of uploaded files
@@ -366,7 +366,7 @@ export default function NewPrompt({
                             optimisticUrl:
                               uploadingAttachments[index]?.optimisticUrl,
                           },
-                        ]),
+                        ])
                       );
 
                       // Update attachments, replacing uploading ones with uploaded ones
@@ -409,7 +409,7 @@ export default function NewPrompt({
                     // Remove failed uploads and clean up blob URLs
                     setAttachments((prev) => {
                       const failedUploads = prev.filter(
-                        (att) => att.isUploading,
+                        (att) => att.isUploading
                       );
                       failedUploads.forEach((att) => {
                         if (att.optimisticUrl?.startsWith("blob:")) {
@@ -417,7 +417,7 @@ export default function NewPrompt({
                         }
                       });
                       const filteredAttachments = prev.filter(
-                        (att) => !att.isUploading,
+                        (att) => !att.isUploading
                       );
                       onAttachmentsChange?.(filteredAttachments);
                       return filteredAttachments;
@@ -439,8 +439,8 @@ export default function NewPrompt({
                       prev.map((att) =>
                         att.isUploading
                           ? { ...att, uploadProgress: progress }
-                          : att,
-                      ),
+                          : att
+                      )
                     );
                   }}
                 />

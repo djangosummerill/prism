@@ -11,10 +11,12 @@ import {
 
 export function DeleteDialog({
   open,
+  text,
   setOpen,
   onConfirm,
 }: {
   open: boolean;
+  text: string;
   setOpen: (open: boolean) => void;
   onConfirm: () => void;
 }) {
@@ -24,8 +26,8 @@ export function DeleteDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete this chat
-            from our servers.
+            This action cannot be undone. This will permanently delete this{" "}
+            {text} from our servers.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

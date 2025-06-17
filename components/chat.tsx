@@ -15,6 +15,8 @@ import {
   Download,
   Loader2,
   ChevronDown,
+  Delete,
+  Trash,
 } from "lucide-react";
 import { IconRefresh } from "@tabler/icons-react";
 import IconButton from "./chat-button";
@@ -25,6 +27,7 @@ import { useModel } from "@/hooks/use-model";
 import { MessageReasoning } from "./message-reasoning";
 import { Button } from "@/components/ui/button";
 import { getModelById } from "@/lib/models";
+import { DeleteDialog } from "./delete-dialog";
 
 /* -------------------------------------------------------------------------- */
 /* Types                                                                      */
@@ -75,6 +78,11 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
   const [previewAttachment, setPreviewAttachment] = useState<any | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
+  const [open, setOpen] = useState(false);
+  const [openDeleteMessageDialog, setOpenDeleteMessageDialog] = useState(false);
+  const [deletingMessageId, setDeletingMessageId] = useState<string | null>(
+    null
+  );
 
   /* ---------------------------------------------------------------------- */
   /* Helpers                                                                */
@@ -128,29 +136,73 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
     }
   };
 
+  const handleDelete = async (messageId: string) => {
+    const messageIndex = chatHook.messages.findIndex((m) => m.id === messageId);
+    if (messageIndex === -1) return;
+
+    // Save current messages for potential rollback
+    const originalMessages = [...chatHook.messages];
+
+    // Optimistically remove the message and everything after it
+    const messagesToKeep = chatHook.messages.slice(0, messageIndex);
+    chatHook.setMessages(messagesToKeep);
+
+    try {
+      // Delete messages from database starting from this index
+      if (currentChatId) {
+        await deleteMessagesFromIndex(currentChatId, messageIndex);
+      }
+
+      // If the last message is a user message, trigger regeneration
+      if (
+        messagesToKeep.length > 0 &&
+        messagesToKeep[messagesToKeep.length - 1].role === "user"
+      ) {
+        chatHook.reload();
+      }
+    } catch (error) {
+      // Rollback on error
+      chatHook.setMessages(originalMessages);
+      toast.error("Failed to retry message", {
+        description:
+          error instanceof Error ? error.message : "An error occurred.",
+        action: { label: "Hide", onClick: () => {} },
+      });
+    }
+  };
+
   const handleRetry = async (messageId: string) => {
     const messageIndex = chatHook.messages.findIndex((m) => m.id === messageId);
     if (messageIndex === -1) return;
 
-    const message = chatHook.messages[messageIndex];
+    // Save current messages for potential rollback
+    const originalMessages = [...chatHook.messages];
 
-    if (message.role === "assistant") {
-      // For assistant messages, remove this message and regenerate
-      const messagesToKeep = chatHook.messages.slice(0, messageIndex);
-      chatHook.setMessages(messagesToKeep);
-      chatHook.reload();
-    } else if (message.role === "user") {
-      // For user messages, find the next assistant message and regenerate from this user message
-      const nextAssistantIndex = chatHook.messages.findIndex(
-        (m, idx) => idx > messageIndex && m.role === "assistant"
-      );
+    // Optimistically remove the message and everything after it
+    const messagesToKeep = chatHook.messages.slice(0, messageIndex);
+    chatHook.setMessages(messagesToKeep);
 
-      if (nextAssistantIndex !== -1) {
-        // Remove the assistant message and all subsequent messages
-        const messagesToKeep = chatHook.messages.slice(0, nextAssistantIndex);
-        chatHook.setMessages(messagesToKeep);
+    try {
+      // Delete messages from database starting from this index
+      if (currentChatId) {
+        await deleteMessagesFromIndex(currentChatId, messageIndex - 1);
+      }
+
+      // If the last message is a user message, trigger regeneration
+      if (
+        messagesToKeep.length > 0 &&
+        messagesToKeep[messagesToKeep.length - 1].role === "user"
+      ) {
         chatHook.reload();
       }
+    } catch (error) {
+      // Rollback on error
+      chatHook.setMessages(originalMessages);
+      toast.error("Failed to retry message", {
+        description:
+          error instanceof Error ? error.message : "An error occurred.",
+        action: { label: "Hide", onClick: () => {} },
+      });
     }
   };
 
@@ -659,12 +711,25 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
                         aria-label="Branch"
                       />
                     )}
-                    <IconButton
-                      onClick={() => handleRetry(message.id)}
-                      icon={IconRefresh}
-                      tabIndex={-1}
-                      aria-label="Retry"
-                    />
+                    {message.role === "user" ? (
+                      <IconButton
+                        onClick={() => {
+                          setDeletingMessageId(message.id);
+                          setOpenDeleteMessageDialog(true);
+                        }}
+                        icon={Trash}
+                        tabIndex={-1}
+                        aria-label="Delete"
+                      />
+                    ) : (
+                      <IconButton
+                        onClick={() => handleRetry(message.id)}
+                        icon={IconRefresh}
+                        tabIndex={-1}
+                        aria-label="Retry"
+                      />
+                    )}
+
                     {message.role == "assistant" && (
                       <span className="text-xs text-muted-foreground font-medium">
                         {(() => {
@@ -795,6 +860,17 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
           </div>
         </div>
       )}
+      <DeleteDialog
+        open={openDeleteMessageDialog}
+        text="and all subsequent messages"
+        setOpen={setOpenDeleteMessageDialog}
+        onConfirm={async () => {
+          if (deletingMessageId) {
+            await handleDelete(deletingMessageId);
+            setDeletingMessageId(null);
+          }
+        }}
+      />
     </>
   );
 }

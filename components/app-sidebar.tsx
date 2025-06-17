@@ -246,6 +246,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
       </SidebarFooter>
       <DeleteDialog
         open={open}
+        text="chat"
         setOpen={setOpen}
         onConfirm={() => {
           deleteChat(deletingChatId || "");
