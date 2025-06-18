@@ -5,7 +5,7 @@ import { getProvider } from "@/lib/provider";
 // Allow streaming responses up to 5 minutes
 export const maxDuration = 300;
 
-export function errorHandler(error: unknown) {
+function errorHandler(error: unknown) {
   if (error == null) {
     return "unknown error";
   }

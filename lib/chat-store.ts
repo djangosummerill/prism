@@ -158,6 +158,7 @@ export async function branchChat(
   );
 
   for (const msg of branchedMessages) {
+    // @ts-ignore
     await saveMessage(msg, newChatId, msg.annotations?.[0]?.model || "");
   }
 

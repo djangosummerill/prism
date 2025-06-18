@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +17,7 @@ import { useSearchParams } from "next/navigation";
 import { signinWithGoogle } from "../signin/actions";
 import { signup } from "./actions";
 
-export default function SignUpPage() {
+function SignUpContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
   const info = searchParams.get("info");
@@ -151,5 +151,13 @@ export default function SignUpPage() {
         and <a href="#">Privacy Policy</a>.
       </div>
     </div>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense fallback={<div>Loading sign up...</div>}>
+      <SignUpContent />
+    </Suspense>
   );
 }
