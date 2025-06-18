@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getProvider } from "@/lib/provider";
 
 // Allow streaming responses up to 5 minutes
-export const maxDuration = 300;
+export const maxDuration = 60;
 
 function errorHandler(error: unknown) {
   if (error == null) {
