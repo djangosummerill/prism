@@ -67,8 +67,6 @@ export async function POST(req: Request) {
 
   await saveMessage(message, id);
 
-  console.log(reasoning == "none" ? { max_tokens: 0 } : { effort: reasoning });
-
   const result = streamText({
     model: openrouter(
       model,
