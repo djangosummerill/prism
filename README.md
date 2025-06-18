@@ -12,7 +12,7 @@
 1. Setup accounts on [Supabase](https://supabase.com/), [OpenRouter](https://openrouter.com/) & [UploadThing](https://uploadthing.com/) (be aware you will have to have credits in OpenRouter to use the LLMs!)
 2. Paste their respective API keys in `.env.local`, following the format provided in `.env.local.example`
 3. Run `schema.sql` in Supabase, to create the nessecary database
-4. (optional) [Setup Google authentication in Supabase](https://supabase.com/docs/guides/auth/social-login/auth-google/]
+4. (optional) [Setup Google authentication in Supabase](https://supabase.com/docs/guides/auth/social-login/auth-google/)
 4. Run `pnpm install`, then `pnpm build` and `pnpm start`
 5. Enjoy!
 
