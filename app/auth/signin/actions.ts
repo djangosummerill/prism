@@ -24,11 +24,12 @@ export async function signin(formData: FormData) {
 }
 
 export async function signinWithGoogle() {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: "http://localhost:3000",
+      redirectTo: siteUrl,
     },
   });
 
