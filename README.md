@@ -1,4 +1,4 @@
 <p align="center">
-  ![Prism](/../assets/icons/prism_accent.png)
+  <img src="/../assets/icons/prism_accent.png" width="500" alt="Prism">
   The universal chat app.
 </p>
