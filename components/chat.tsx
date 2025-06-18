@@ -753,6 +753,7 @@ export default function Chat({ newChat, chatId, initialMessages }: ChatProps) {
                     {message.role == "assistant" && (
                       <span className="text-xs text-muted-foreground font-medium">
                         {(() => {
+                          // @ts-ignore
                           const messageModel = message.annotations?.[0]?.model;
                           if (messageModel) {
                             return (
